@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api, resizeImage } from "../api";
+import { CameraOverlay } from "../components/CameraOverlay";
+import {
+  openBackCamera,
+  pickAlbumFile,
+  pickNativeCameraFile,
+  stopStream,
+} from "../lib/camera";
 import type { GuidePayload } from "../types";
 
 type RecognizeResponse = {
@@ -33,8 +40,8 @@ const TIPS = [
 
 export function RecognizePage() {
   const navigate = useNavigate();
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const albumRef = useRef<HTMLInputElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
@@ -45,6 +52,33 @@ export function RecognizePage() {
       .then((data) => setNickname(data.user.nickname))
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    return () => stopStream(streamRef.current);
+  }, []);
+
+  function closeCamera() {
+    stopStream(streamRef.current);
+    streamRef.current = null;
+    setStream(null);
+  }
+
+  async function startCamera() {
+    setError(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      const file = await pickNativeCameraFile();
+      await onFile(file);
+      return;
+    }
+    try {
+      const next = await openBackCamera();
+      stopStream(streamRef.current);
+      streamRef.current = next;
+      setStream(next);
+    } catch {
+      setError("카메라 권한이 필요해요. 브라우저 설정에서 카메라를 허용한 뒤 다시 눌러 주세요.");
+    }
+  }
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -59,6 +93,7 @@ export function RecognizePage() {
         method: "POST",
         body: form,
       });
+      closeCamera();
       if (data.fallback || !data.guide || !data.recognition.item_id) {
         setFallback(true);
         return;
@@ -73,6 +108,17 @@ export function RecognizePage() {
 
   return (
     <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
+      {stream ? (
+        <CameraOverlay
+          stream={stream}
+          busy={busy}
+          onClose={closeCamera}
+          onCapture={(file) => {
+            void onFile(file);
+          }}
+        />
+      ) : null}
+
       <header className="flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold text-mute">Smart Recycle</p>
@@ -95,7 +141,9 @@ export function RecognizePage() {
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={() => cameraRef.current?.click()}
+            onClick={() => {
+              void startCamera();
+            }}
             disabled={busy}
             className="min-h-11 flex-1 rounded-2xl bg-ink text-sm font-bold text-white disabled:opacity-60"
           >
@@ -103,7 +151,9 @@ export function RecognizePage() {
           </button>
           <button
             type="button"
-            onClick={() => albumRef.current?.click()}
+            onClick={() => {
+              void pickAlbumFile().then((file) => onFile(file));
+            }}
             disabled={busy}
             className="min-h-11 flex-1 rounded-2xl bg-white text-sm font-bold disabled:opacity-60"
           >
@@ -162,7 +212,9 @@ export function RecognizePage() {
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              onClick={() => cameraRef.current?.click()}
+              onClick={() => {
+                void startCamera();
+              }}
               className="min-h-11 flex-1 rounded-2xl bg-white text-sm font-bold"
             >
               다시 촬영
@@ -176,28 +228,6 @@ export function RecognizePage() {
           </div>
         </div>
       ) : null}
-
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        capture="environment"
-        className="hidden"
-        onChange={(event) => {
-          void onFile(event.target.files?.[0]);
-          event.target.value = "";
-        }}
-      />
-      <input
-        ref={albumRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={(event) => {
-          void onFile(event.target.files?.[0]);
-          event.target.value = "";
-        }}
-      />
     </div>
   );
 }
