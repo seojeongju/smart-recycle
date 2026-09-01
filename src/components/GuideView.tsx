@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router";
+import { api } from "../api";
 import type { GuidePayload } from "../types";
 
 type Props = {
@@ -6,6 +8,7 @@ type Props = {
   onCheckin?: () => void;
   checkinBusy?: boolean;
   checkinMessage?: string | null;
+  logId?: string | null;
 };
 
 export function GuideView({
@@ -13,7 +16,26 @@ export function GuideView({
   onCheckin,
   checkinBusy,
   checkinMessage,
+  logId,
 }: Props) {
+  const [feedback, setFeedback] = useState<"yes" | "no" | null>(null);
+
+  async function sendFeedback(helpful: boolean) {
+    setFeedback(helpful ? "yes" : "no");
+    try {
+      await api("/api/recognize/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          log_id: logId ?? null,
+          item_id: guide.item_id,
+          helpful,
+        }),
+      });
+    } catch {
+      setFeedback(null);
+    }
+  }
   return (
     <div className="space-y-5 pb-6">
       <section className="rounded-[24px] bg-brand px-5 py-5">
@@ -80,6 +102,49 @@ export function GuideView({
           ) : null}
         </div>
       ) : null}
+
+      <section className="rounded-[18px] bg-surface px-4 py-4">
+        <p className="text-sm font-extrabold">이 답이 맞나요?</p>
+        <p className="mt-1 text-xs text-mute">
+          틀린 인식은 검색·카탈로그를 다듬는 데 씁니다.
+        </p>
+        {feedback === "yes" ? (
+          <p className="mt-3 text-sm font-semibold">고마워요. 도움이 됐어요.</p>
+        ) : null}
+        {feedback === "no" ? (
+          <div className="mt-3">
+            <p className="text-sm font-semibold">다른 이름으로 찾아 볼게요.</p>
+            <Link
+              to="/search"
+              className="mt-2 flex min-h-11 items-center justify-center rounded-2xl bg-white text-sm font-bold"
+            >
+              검색으로 찾기
+            </Link>
+          </div>
+        ) : null}
+        {feedback === null ? (
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void sendFeedback(true);
+              }}
+              className="min-h-11 flex-1 rounded-2xl bg-white text-sm font-bold"
+            >
+              맞아요
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void sendFeedback(false);
+              }}
+              className="min-h-11 flex-1 rounded-2xl bg-ink text-sm font-bold text-white"
+            >
+              아니에요
+            </button>
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }

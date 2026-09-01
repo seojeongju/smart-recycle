@@ -29,6 +29,7 @@
   "ai": {
     "binding": "AI"
   },
+  // 공공데이터포털 키: npx wrangler secret put PUBLIC_DATA_API_KEY
   "triggers": {
     "crons": ["0 18 * * *"]
   }

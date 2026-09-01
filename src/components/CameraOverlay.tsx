@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { snapshotFromVideo, stopStream } from "../lib/camera";
+import { snapshotFromVideo } from "../lib/camera";
 
 type Props = {
   stream: MediaStream;

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useLocation, useParams } from "react-router";
 import { api } from "../api";
 import { GuideView } from "../components/GuideView";
 import type { GuidePayload } from "../types";
 
 export function ItemPage() {
   const { id } = useParams();
+  const location = useLocation();
+  const logId =
+    (location.state as { logId?: string } | null)?.logId ?? null;
   const [guide, setGuide] = useState<GuidePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -52,6 +55,7 @@ export function ItemPage() {
         <div className="mt-3">
           <GuideView
             guide={guide}
+            logId={logId}
             onCheckin={() => {
               void checkin();
             }}

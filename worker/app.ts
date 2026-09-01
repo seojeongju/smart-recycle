@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { loadGuide, searchItems } from "./catalog";
+import { loadGuide, searchItems, suggestItems } from "./catalog";
 import type { AppEnv } from "./env";
 import {
   haversineMeters,
@@ -9,6 +9,7 @@ import {
   levelFromXp,
 } from "./lib";
 import { recognizeImage } from "./recognize";
+import { syncPublicData } from "./sync";
 import { ensureUser } from "./user";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -26,6 +27,54 @@ app.get("/api/health", (c) => c.json({ ok: true, name: "smart-recycle" }));
 app.use("/api/*", async (c, next) => {
   if (c.req.path === "/api/health") return next();
   return ensureUser(c, next);
+});
+
+app.get("/api/sync/status", async (c) => {
+  const last = await c.env.DB.prepare(
+    `SELECT source, status, row_count, error, ran_at
+     FROM sync_jobs ORDER BY id DESC LIMIT 1`,
+  ).first<{
+    source: string;
+    status: string;
+    row_count: number | null;
+    error: string | null;
+    ran_at: string;
+  }>();
+  const pharmacy = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM collection_bins WHERE source = 'public_data_pharmacy'`,
+  ).first<{ n: number }>();
+  const total = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM collection_bins`,
+  ).first<{ n: number }>();
+  return c.json({
+    last,
+    pharmacy_count: pharmacy?.n ?? 0,
+    total_bins: total?.n ?? 0,
+  });
+});
+
+app.post("/api/sync", async (c) => {
+  const recent = await c.env.DB.prepare(
+    `SELECT id FROM sync_jobs
+     WHERE source = 'public_data'
+       AND ran_at >= datetime('now', '-10 minutes')
+     LIMIT 1`,
+  ).first();
+  if (recent) {
+    return c.json(
+      jsonError("RATE_LIMIT", "방금 동기화했어요. 잠시 후 다시 시도해 주세요."),
+      429,
+    );
+  }
+  await syncPublicData(c.env);
+  const last = await c.env.DB.prepare(
+    `SELECT source, status, row_count, error, ran_at
+     FROM sync_jobs ORDER BY id DESC LIMIT 1`,
+  ).first();
+  const pharmacy = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM collection_bins WHERE source = 'public_data_pharmacy'`,
+  ).first<{ n: number }>();
+  return c.json({ last, pharmacy_count: pharmacy?.n ?? 0 });
 });
 
 app.get("/api/categories", async (c) => {
@@ -119,6 +168,8 @@ app.post("/api/recognize", async (c) => {
 
   const result = await recognizeImage(c.env, bytes);
   const latency = Date.now() - started;
+  const logId = crypto.randomUUID();
+  const fallback = result.fallback || !result.itemId;
 
   c.executionCtx.waitUntil(
     c.env.DB.prepare(
@@ -127,10 +178,10 @@ app.post("/api/recognize", async (c) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
-        crypto.randomUUID(),
+        logId,
         userId,
         key,
-        result.rawLabel,
+        `${result.model}:${result.rawLabel}`.slice(0, 200),
         result.itemId,
         result.categoryId,
         result.confidence,
@@ -149,17 +200,48 @@ app.post("/api/recognize", async (c) => {
   );
 
   const guide = result.itemId ? await loadGuide(c.env.DB, result.itemId) : null;
+  const suggestions = fallback
+    ? await suggestItems(c.env.DB, result.categoryId)
+    : [];
   return c.json({
     recognition: {
+      id: logId,
       item_id: result.itemId,
       category_id: result.categoryId,
       label_ko: result.labelKo,
       confidence: result.confidence,
       image_key: key,
+      model: result.model,
     },
     guide,
-    fallback: result.fallback || !guide,
+    fallback: fallback || !guide,
+    suggestions,
   });
+});
+
+app.post("/api/recognize/feedback", async (c) => {
+  const body = await c.req.json<{
+    log_id?: string;
+    item_id?: string;
+    helpful?: boolean;
+  }>();
+  const itemId = (body.item_id ?? "").trim();
+  if (!itemId || typeof body.helpful !== "boolean") {
+    return c.json(jsonError("BAD_REQUEST", "피드백 값이 필요해요."), 400);
+  }
+  await c.env.DB.prepare(
+    `INSERT INTO recognition_feedback (id, user_id, log_id, item_id, helpful)
+     VALUES (?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      crypto.randomUUID(),
+      c.get("userId"),
+      body.log_id ?? null,
+      itemId,
+      body.helpful ? 1 : 0,
+    )
+    .run();
+  return c.json({ ok: true });
 });
 
 app.get("/api/bins", async (c) => {
@@ -204,7 +286,27 @@ app.get("/api/bins", async (c) => {
     .sort((a, b) => a.distance_m - b.distance_m)
     .slice(0, 100);
 
-  return c.json({ bins });
+  const total = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM collection_bins`,
+  ).first<{ n: number }>();
+  const lastSync = await c.env.DB.prepare(
+    `SELECT status, row_count, ran_at, error FROM sync_jobs
+     ORDER BY id DESC LIMIT 1`,
+  ).first<{
+    status: string;
+    row_count: number | null;
+    ran_at: string;
+    error: string | null;
+  }>();
+
+  return c.json({
+    bins,
+    meta: {
+      nearby: bins.length,
+      total: total?.n ?? 0,
+      last_sync: lastSync,
+    },
+  });
 });
 
 app.get("/api/bins/:id", async (c) => {

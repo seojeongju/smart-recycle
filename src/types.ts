@@ -31,6 +31,17 @@ export type SearchItem = {
   category_name: string;
 };
 
+export const FALLBACK_CHIPS = [
+  { q: "페트병", label: "페트" },
+  { q: "배달용기", label: "배달용기" },
+  { q: "비닐", label: "비닐" },
+  { q: "약봉지", label: "폐의약품" },
+  { q: "건전지", label: "건전지" },
+  { q: "이어폰", label: "소형가전" },
+  { q: "옷", label: "의류" },
+  { q: "종이컵", label: "일회용컵" },
+] as const;
+
 export type Bin = {
   id: string;
   type: string;

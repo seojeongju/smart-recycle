@@ -55,6 +55,58 @@ export async function loadGuide(
   };
 }
 
+export async function suggestItems(
+  db: D1Database,
+  categoryId: string | null,
+  limit = 6,
+) {
+  if (categoryId && categoryId !== "unknown") {
+    const { results } = await db
+      .prepare(
+        `SELECT i.id, i.name_ko, i.summary_ko, i.category_id, c.name_ko AS category_name
+         FROM waste_items i
+         JOIN waste_categories c ON c.id = i.category_id
+         WHERE i.is_active = 1 AND i.category_id = ?
+         LIMIT ?`,
+      )
+      .bind(categoryId, limit)
+      .all<{
+        id: string;
+        name_ko: string;
+        summary_ko: string;
+        category_id: string;
+        category_name: string;
+      }>();
+    if ((results ?? []).length > 0) return results ?? [];
+  }
+
+  const defaults = [
+    "pet-clear",
+    "delivery-container",
+    "vinyl-bag",
+    "medicine",
+    "battery",
+    "clothing",
+  ];
+  const placeholders = defaults.map(() => "?").join(",");
+  const { results } = await db
+    .prepare(
+      `SELECT i.id, i.name_ko, i.summary_ko, i.category_id, c.name_ko AS category_name
+       FROM waste_items i
+       JOIN waste_categories c ON c.id = i.category_id
+       WHERE i.is_active = 1 AND i.id IN (${placeholders})`,
+    )
+    .bind(...defaults)
+    .all<{
+      id: string;
+      name_ko: string;
+      summary_ko: string;
+      category_id: string;
+      category_name: string;
+    }>();
+  return results ?? [];
+}
+
 export async function searchItems(db: D1Database, query: string, limit = 8) {
   const like = `%${query}%`;
   const { results } = await db

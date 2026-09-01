@@ -142,6 +142,12 @@ export function MePage() {
           </ul>
         )}
       </section>
+
+      <p className="mt-8 text-center text-[11px] leading-5 text-mute">
+        수거함 위치는 공공데이터포털·시드 자료를 참고합니다.
+        <br />
+        운영 여부는 현장 안내를 우선하세요.
+      </p>
     </div>
   );
 }

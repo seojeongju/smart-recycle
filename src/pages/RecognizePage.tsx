@@ -8,10 +8,12 @@ import {
   pickNativeCameraFile,
   stopStream,
 } from "../lib/camera";
-import type { GuidePayload } from "../types";
+import { readRecentSearches } from "../lib/recent";
+import { FALLBACK_CHIPS, type GuidePayload, type SearchItem } from "../types";
 
 type RecognizeResponse = {
   recognition: {
+    id: string;
     item_id: string | null;
     category_id: string;
     label_ko: string;
@@ -19,6 +21,7 @@ type RecognizeResponse = {
   };
   guide: GuidePayload | null;
   fallback: boolean;
+  suggestions: SearchItem[];
 };
 
 const FEATURES = [
@@ -45,12 +48,15 @@ export function RecognizePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
+  const [suggestions, setSuggestions] = useState<SearchItem[]>([]);
+  const [recent, setRecent] = useState<string[]>([]);
   const [nickname, setNickname] = useState("새싹이");
 
   useEffect(() => {
     void api<{ user: { nickname: string } }>("/api/me")
       .then((data) => setNickname(data.user.nickname))
       .catch(() => undefined);
+    setRecent(readRecentSearches());
   }, []);
 
   useEffect(() => {
@@ -85,6 +91,7 @@ export function RecognizePage() {
     setBusy(true);
     setError(null);
     setFallback(false);
+    setSuggestions([]);
     try {
       const blob = await resizeImage(file);
       const form = new FormData();
@@ -96,9 +103,12 @@ export function RecognizePage() {
       closeCamera();
       if (data.fallback || !data.guide || !data.recognition.item_id) {
         setFallback(true);
+        setSuggestions(data.suggestions ?? []);
         return;
       }
-      void navigate(`/items/${data.recognition.item_id}`);
+      void navigate(`/items/${data.recognition.item_id}`, {
+        state: { fromRecognize: true, logId: data.recognition.id },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "인식에 실패했어요.");
     } finally {
@@ -204,11 +214,60 @@ export function RecognizePage() {
       ) : null}
 
       {fallback ? (
-        <div className="mt-4 rounded-[20px] bg-surface p-4 text-center">
-          <p className="font-extrabold">잘 모르겠어요</p>
-          <p className="mt-1 text-sm leading-6 text-mute">
-            가까이 다시 찍거나, 이름으로 검색해 주세요.
+        <div className="mt-4 rounded-[20px] bg-surface p-4">
+          <p className="text-center font-extrabold">잘 모르겠어요</p>
+          <p className="mt-1 text-center text-sm leading-6 text-mute">
+            가까이 다시 찍거나, 아래 품목·최근 검색으로 바로 찾아 보세요.
           </p>
+          {suggestions.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {suggestions.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    to={`/items/${item.id}`}
+                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3"
+                  >
+                    <span>
+                      <span className="text-[11px] font-bold text-mute">
+                        {item.category_name}
+                      </span>
+                      <span className="mt-0.5 block text-sm font-extrabold">
+                        {item.name_ko}
+                      </span>
+                    </span>
+                    <span className="text-mute">›</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {FALLBACK_CHIPS.map((chip) => (
+              <Link
+                key={chip.q}
+                to={`/search?q=${encodeURIComponent(chip.q)}`}
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-bold"
+              >
+                {chip.label}
+              </Link>
+            ))}
+          </div>
+          {recent.length > 0 ? (
+            <div className="mt-3">
+              <p className="text-[11px] font-bold text-mute">최근 검색</p>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {recent.map((query) => (
+                  <Link
+                    key={query}
+                    to={`/search?q=${encodeURIComponent(query)}`}
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-bold"
+                  >
+                    {query}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="mt-3 flex gap-2">
             <button
               type="button"

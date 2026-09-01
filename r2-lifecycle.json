@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "id": "expire-recognition-uploads",
+      "status": "Enabled",
+      "filter": { "prefix": "uploads/" },
+      "expiration": { "days": 7 }
+    },
+    {
+      "id": "expire-checkin-photos",
+      "status": "Enabled",
+      "filter": { "prefix": "checkins/" },
+      "expiration": { "days": 90 }
+    }
+  ]
+}

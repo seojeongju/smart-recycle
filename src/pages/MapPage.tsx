@@ -24,6 +24,9 @@ export function MapPage() {
   const [denied, setDenied] = useState(false);
   const [bins, setBins] = useState<Bin[]>([]);
   const [selected, setSelected] = useState<Bin | null>(null);
+  const [coverage, setCoverage] = useState<{ nearby: number; total: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -46,8 +49,12 @@ export function MapPage() {
       radius_m: "3000",
     });
     if (type) query.set("type", type);
-    void api<{ bins: Bin[] }>(`/api/bins?${query}`).then((data) => {
+    void api<{
+      bins: Bin[];
+      meta?: { nearby: number; total: number };
+    }>(`/api/bins?${query}`).then((data) => {
       setBins(data.bins);
+      setCoverage(data.meta ?? null);
       setSelected(null);
     });
   }, [origin, type]);
@@ -109,7 +116,10 @@ export function MapPage() {
             위치 권한이 없어 서울시청 기준으로 보여요.
           </p>
         ) : (
-          <p className="mt-1 text-xs text-mute">내 위치 기준 3km 안의 수거함</p>
+          <p className="mt-1 text-xs text-mute">
+            내 위치 기준 3km 안의 수거함
+            {coverage ? ` · 전체 ${coverage.total}곳` : ""}
+          </p>
         )}
         <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
           {FILTERS.map((filter) => {
@@ -148,7 +158,13 @@ export function MapPage() {
             <BinDetail bin={selected} />
           </div>
         ) : list.length === 0 ? (
-          <p className="text-sm text-mute">이 범위에는 아직 데이터가 적어요.</p>
+          <div className="px-1 py-2">
+            <p className="text-sm font-extrabold">이 지역 데이터가 아직 적어요</p>
+            <p className="mt-1 text-sm leading-6 text-mute">
+              반경을 넓히거나, 폐의약품은 가까운 약국 수거함을 이용해 보세요.
+              공공데이터 연동이 되면 전국 약국이 채워집니다.
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {list.map((bin) => (
