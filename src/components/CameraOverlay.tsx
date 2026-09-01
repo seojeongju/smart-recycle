@@ -66,7 +66,7 @@ export function CameraOverlay({ stream, busy, onClose, onCapture }: Props) {
           aria-label="사진 찍기"
         />
         <p className="mt-3 text-sm font-semibold text-white">
-          {busy ? "확인 중..." : "버튼을 눌러 촬영"}
+          {busy ? "살펴보는 중..." : "버튼을 눌러 촬영"}
         </p>
       </div>
     </div>

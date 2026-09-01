@@ -51,6 +51,7 @@ export type Bin = {
   lng: number;
   phone: string | null;
   hours: string | null;
+  source?: string | null;
   distance_m?: number;
 };
 
@@ -81,6 +82,11 @@ export const BIN_LABELS: Record<string, string> = {
   clothing: "의류",
   recycle_station: "재활용 정거장",
   battery: "폐건전지",
+};
+
+export const BIN_SOURCE_LABELS: Record<string, string> = {
+  public_data_pharmacy: "약국 수거함 · 공공데이터",
+  seed: "참고 위치",
 };
 
 export const SEOUL_HALL = { lat: 37.5665, lng: 126.978 };

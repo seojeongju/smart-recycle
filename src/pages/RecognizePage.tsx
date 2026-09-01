@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api, resizeImage } from "../api";
 import { CameraOverlay } from "../components/CameraOverlay";
+import { RecognizeFlow } from "../components/RecognizeFlow";
 import {
   openBackCamera,
   pickAlbumFile,
@@ -35,6 +36,12 @@ const FEATURES = [
   { q: "옷", label: "의류", bg: "#FFF6D8", icon: "shirt" },
 ] as const;
 
+const STAGES = [
+  "사진을 정리하는 중",
+  "품목을 살펴보는 중",
+  "배출 방법을 찾는 중",
+] as const;
+
 const TIPS = [
   { title: "페트는 라벨부터", body: "헹구고 라벨을 떼면 재활용률이 올라가요." },
   { title: "약은 약국으로", body: "싱크대에 버리지 말고 폐의약품함에 넣으세요." },
@@ -44,6 +51,8 @@ const TIPS = [
 export function RecognizePage() {
   const navigate = useNavigate();
   const streamRef = useRef<MediaStream | null>(null);
+  const genRef = useRef(0);
+  const previewRef = useRef<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +60,10 @@ export function RecognizePage() {
   const [suggestions, setSuggestions] = useState<SearchItem[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const [nickname, setNickname] = useState("새싹이");
+  const [flow, setFlow] = useState<"idle" | "loading" | "confirm">("idle");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [stageIdx, setStageIdx] = useState(0);
+  const [pending, setPending] = useState<RecognizeResponse | null>(null);
 
   useEffect(() => {
     void api<{ user: { nickname: string } }>("/api/me")
@@ -60,13 +73,38 @@ export function RecognizePage() {
   }, []);
 
   useEffect(() => {
-    return () => stopStream(streamRef.current);
+    return () => {
+      stopStream(streamRef.current);
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    };
   }, []);
+
+  useEffect(() => {
+    if (flow !== "loading") return;
+    const timer = window.setInterval(() => {
+      setStageIdx((value) => (value + 1) % STAGES.length);
+    }, 1400);
+    return () => window.clearInterval(timer);
+  }, [flow]);
 
   function closeCamera() {
     stopStream(streamRef.current);
     streamRef.current = null;
     setStream(null);
+  }
+
+  function setPreview(url: string | null) {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = url;
+    setPreviewUrl(url);
+  }
+
+  function resetFlow() {
+    genRef.current += 1;
+    setFlow("idle");
+    setPending(null);
+    setBusy(false);
+    setPreview(null);
   }
 
   async function startCamera() {
@@ -86,12 +124,36 @@ export function RecognizePage() {
     }
   }
 
+  async function sendFeedback(itemId: string, logId: string, helpful: boolean) {
+    try {
+      await api("/api/recognize/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ log_id: logId, item_id: itemId, helpful }),
+      });
+    } catch {
+      // 피드백 실패는 가이드 이동을 막지 않음
+    }
+  }
+
+  function goToItem(itemId: string, logId: string) {
+    void navigate(`/items/${itemId}`, {
+      state: { fromRecognize: true, logId },
+    });
+  }
+
   async function onFile(file: File | undefined) {
     if (!file) return;
+    const gen = ++genRef.current;
+    setPreview(URL.createObjectURL(file));
+    setFlow("loading");
+    setStageIdx(0);
     setBusy(true);
     setError(null);
     setFallback(false);
     setSuggestions([]);
+    setPending(null);
+    closeCamera();
     try {
       const blob = await resizeImage(file);
       const form = new FormData();
@@ -100,19 +162,23 @@ export function RecognizePage() {
         method: "POST",
         body: form,
       });
-      closeCamera();
+      if (gen !== genRef.current) return;
       if (data.fallback || !data.guide || !data.recognition.item_id) {
+        setFlow("idle");
         setFallback(true);
         setSuggestions(data.suggestions ?? []);
+        setPreview(null);
         return;
       }
-      void navigate(`/items/${data.recognition.item_id}`, {
-        state: { fromRecognize: true, logId: data.recognition.id },
-      });
+      setPending(data);
+      setFlow("confirm");
     } catch (err) {
+      if (gen !== genRef.current) return;
+      setFlow("idle");
+      setPreview(null);
       setError(err instanceof Error ? err.message : "인식에 실패했어요.");
     } finally {
-      setBusy(false);
+      if (gen === genRef.current) setBusy(false);
     }
   }
 
@@ -126,6 +192,38 @@ export function RecognizePage() {
           onCapture={(file) => {
             void onFile(file);
           }}
+        />
+      ) : null}
+
+      {previewUrl && flow !== "idle" ? (
+        <RecognizeFlow
+          previewUrl={previewUrl}
+          mode={flow === "confirm" ? "confirm" : "loading"}
+          stageLabel={STAGES[stageIdx]}
+          labelKo={pending?.recognition.label_ko}
+          confidence={pending?.recognition.confidence}
+          alternatives={pending?.suggestions ?? []}
+          onYes={() => {
+            const itemId = pending?.recognition.item_id;
+            const logId = pending?.recognition.id;
+            if (!itemId || !logId) return;
+            void sendFeedback(itemId, logId, true);
+            goToItem(itemId, logId);
+          }}
+          onNo={() => {
+            const itemId = pending?.recognition.item_id;
+            const logId = pending?.recognition.id;
+            if (itemId && logId) void sendFeedback(itemId, logId, false);
+            setSuggestions(pending?.suggestions ?? []);
+            setFallback(true);
+            resetFlow();
+          }}
+          onPickAlt={(id) => {
+            const logId = pending?.recognition.id;
+            if (logId) void sendFeedback(id, logId, true);
+            goToItem(id, logId ?? "");
+          }}
+          onClose={resetFlow}
         />
       ) : null}
 
@@ -157,7 +255,7 @@ export function RecognizePage() {
             disabled={busy}
             className="min-h-11 flex-1 rounded-2xl bg-ink text-sm font-bold text-white disabled:opacity-60"
           >
-            {busy ? "확인 중..." : "촬영하기"}
+            {busy ? "살펴보는 중..." : "촬영하기"}
           </button>
           <button
             type="button"
@@ -225,6 +323,7 @@ export function RecognizePage() {
                 <li key={item.id}>
                   <Link
                     to={`/items/${item.id}`}
+                    state={{ fromRecognize: true }}
                     className="flex items-center justify-between rounded-2xl bg-white px-4 py-3"
                   >
                     <span>

@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { api } from "../api";
+import { pickAlbumFile } from "../lib/camera";
 import type { GuidePayload } from "../types";
 
 type Props = {
   guide: GuidePayload;
-  onCheckin?: () => void;
+  onCheckin?: (image?: File) => void;
   checkinBusy?: boolean;
   checkinMessage?: string | null;
-  logId?: string | null;
+  fromRecognize?: boolean;
 };
 
 export function GuideView({
@@ -16,26 +16,47 @@ export function GuideView({
   onCheckin,
   checkinBusy,
   checkinMessage,
-  logId,
+  fromRecognize = false,
 }: Props) {
-  const [feedback, setFeedback] = useState<"yes" | "no" | null>(null);
+  const storageKey = `smart-recycle_guide_${guide.item_id}`;
+  const [done, setDone] = useState<Set<number>>(() => new Set());
+  const [photoName, setPhotoName] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<File | undefined>();
 
-  async function sendFeedback(helpful: boolean) {
-    setFeedback(helpful ? "yes" : "no");
+  useEffect(() => {
     try {
-      await api("/api/recognize/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          log_id: logId ?? null,
-          item_id: guide.item_id,
-          helpful,
-        }),
-      });
+      const raw = sessionStorage.getItem(storageKey);
+      const parsed = raw ? (JSON.parse(raw) as number[]) : [];
+      setDone(new Set(parsed));
     } catch {
-      setFeedback(null);
+      setDone(new Set());
     }
+    setPhoto(undefined);
+    setPhotoName(null);
+  }, [storageKey]);
+
+  const required = useMemo(
+    () =>
+      guide.steps.filter((step) => step.required === 1 || step.required === true),
+    [guide.steps],
+  );
+  const target = required.length > 0 ? required : guide.steps;
+  const finished = target.every((step) => done.has(step.order));
+  const progress =
+    target.length === 0
+      ? 100
+      : Math.round((target.filter((step) => done.has(step.order)).length / target.length) * 100);
+
+  function toggle(order: number) {
+    setDone((prev) => {
+      const next = new Set(prev);
+      if (next.has(order)) next.delete(order);
+      else next.add(order);
+      sessionStorage.setItem(storageKey, JSON.stringify([...next]));
+      return next;
+    });
   }
+
   return (
     <div className="space-y-5 pb-6">
       <section className="rounded-[24px] bg-brand px-5 py-5">
@@ -47,19 +68,43 @@ export function GuideView({
         </p>
       </section>
 
-      <ol className="space-y-2">
-        {guide.steps.map((step) => (
-          <li key={step.order} className="flex gap-3 rounded-[18px] bg-surface px-4 py-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-extrabold">
-              {step.order}
-            </span>
-            <div>
-              <p className="font-extrabold">{step.title}</p>
-              <p className="mt-0.5 text-sm leading-6 text-mute">{step.body}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <section>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-extrabold">이렇게 버리세요</h3>
+          <p className="text-xs font-bold text-mute">{progress}%</p>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface">
+          <div className="h-full rounded-full bg-brand" style={{ width: `${progress}%` }} />
+        </div>
+        <ol className="mt-3 space-y-2">
+          {guide.steps.map((step) => {
+            const checked = done.has(step.order);
+            return (
+              <li key={step.order}>
+                <button
+                  type="button"
+                  onClick={() => toggle(step.order)}
+                  className={`flex w-full gap-3 rounded-[18px] px-4 py-3 text-left ${
+                    checked ? "bg-brand-soft" : "bg-surface"
+                  }`}
+                >
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
+                      checked ? "bg-ink text-white" : "bg-brand"
+                    }`}
+                  >
+                    {checked ? "✓" : step.order}
+                  </span>
+                  <div>
+                    <p className="font-extrabold">{step.title}</p>
+                    <p className="mt-0.5 text-sm leading-6 text-mute">{step.body}</p>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
 
       {guide.tips.length > 0 ? (
         <section>
@@ -89,10 +134,27 @@ export function GuideView({
 
       {onCheckin ? (
         <div>
+          {!finished ? (
+            <p className="mb-2 text-center text-xs font-semibold text-mute">
+              필요한 단계를 체크하면 인증할 수 있어요.
+            </p>
+          ) : null}
           <button
             type="button"
-            onClick={onCheckin}
-            disabled={checkinBusy}
+            onClick={() => {
+              void pickAlbumFile().then((file) => {
+                setPhoto(file);
+                setPhotoName(file?.name ?? null);
+              });
+            }}
+            className="mb-2 flex min-h-11 w-full items-center justify-center rounded-2xl bg-surface text-sm font-bold"
+          >
+            {photoName ? `사진 선택됨 · ${photoName}` : "인증 사진 추가 (선택)"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onCheckin(photo)}
+            disabled={checkinBusy || !finished}
             className="btn-dark disabled:opacity-60"
           >
             {checkinBusy ? "인증하는 중..." : "오늘 인증하기"}
@@ -103,48 +165,15 @@ export function GuideView({
         </div>
       ) : null}
 
-      <section className="rounded-[18px] bg-surface px-4 py-4">
-        <p className="text-sm font-extrabold">이 답이 맞나요?</p>
-        <p className="mt-1 text-xs text-mute">
-          틀린 인식은 검색·카탈로그를 다듬는 데 씁니다.
+      {fromRecognize ? null : (
+        <p className="text-center text-xs text-mute">
+          다른 품목이면{" "}
+          <Link to="/search" className="font-extrabold text-ink">
+            검색
+          </Link>
+          해 보세요.
         </p>
-        {feedback === "yes" ? (
-          <p className="mt-3 text-sm font-semibold">고마워요. 도움이 됐어요.</p>
-        ) : null}
-        {feedback === "no" ? (
-          <div className="mt-3">
-            <p className="text-sm font-semibold">다른 이름으로 찾아 볼게요.</p>
-            <Link
-              to="/search"
-              className="mt-2 flex min-h-11 items-center justify-center rounded-2xl bg-white text-sm font-bold"
-            >
-              검색으로 찾기
-            </Link>
-          </div>
-        ) : null}
-        {feedback === null ? (
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                void sendFeedback(true);
-              }}
-              className="min-h-11 flex-1 rounded-2xl bg-white text-sm font-bold"
-            >
-              맞아요
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                void sendFeedback(false);
-              }}
-              className="min-h-11 flex-1 rounded-2xl bg-ink text-sm font-bold text-white"
-            >
-              아니에요
-            </button>
-          </div>
-        ) : null}
-      </section>
+      )}
     </div>
   );
 }

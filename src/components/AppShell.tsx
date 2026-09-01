@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import { BottomNav } from "./BottomNav";
+import { InstallBanner } from "./InstallBanner";
 import { Onboarding } from "./Onboarding";
 
-const KEY = "smart-recycle_onboarded_v2";
+const KEY = "smart-recycle_onboarded_v3";
 
 export function AppShell() {
+  const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -25,6 +27,7 @@ export function AppShell() {
       <main className="safe-top flex min-h-0 flex-1 flex-col">
         <Outlet />
       </main>
+      {location.pathname === "/" ? <InstallBanner /> : null}
       <BottomNav />
     </div>
   );

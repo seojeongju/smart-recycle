@@ -209,7 +209,7 @@ export async function syncPublicData(env: Cloudflare.Env): Promise<void> {
   try {
     const first = await fetchPharmacies(key, sido, 1);
     imported += await upsertBins(env.DB, first.rows);
-    const pages = Math.min(3, Math.ceil(first.total / 200));
+    const pages = Math.min(5, Math.ceil(first.total / 200));
     for (let page = 2; page <= pages; page += 1) {
       const next = await fetchPharmacies(key, sido, page);
       imported += await upsertBins(env.DB, next.rows);

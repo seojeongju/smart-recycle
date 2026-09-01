@@ -1,39 +1,59 @@
+import { useState } from "react";
+
 type Props = {
   onDone: () => void;
 };
 
+const SLIDES = [
+  {
+    title: "찍으면 버리는 순서가 나와요",
+    body: "페트병·배달용기·약을 가까이 찍어 보세요. 카카오톡·인스타 안 브라우저에서는 카메라가 막힐 수 있어요.",
+  },
+  {
+    title: "특수 쓰레기는 지도로",
+    body: "위치는 근처 약국·의류함·소형가전 수거함을 보여 주려고만 씁니다. 거부하면 서울시청 기준으로 보여요.",
+  },
+  {
+    title: "하루 한 번이면 충분해요",
+    body: "가이드 단계를 체크하고 인증하면 새싹이가 자라요. 포인트는 현금이 아닙니다.",
+  },
+] as const;
+
 export function Onboarding({ onDone }: Props) {
+  const [index, setIndex] = useState(0);
+  const slide = SLIDES[index];
+  const last = index === SLIDES.length - 1;
+
   return (
     <div className="absolute inset-0 z-40 flex flex-col bg-white px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <div className="relative flex h-56 w-56 items-center justify-center">
-          <span className="absolute h-44 w-44 rounded-full bg-brand" />
-          <span className="absolute left-3 top-8 h-14 w-14 rounded-full bg-brand-dark/30" />
-          <span className="absolute bottom-10 right-2 h-10 w-10 rounded-full bg-white/70" />
-          <svg
-            className="relative"
-            width="88"
-            height="88"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden
-          >
-            <path
-              d="M12 3.5c1.2 4.4 3.2 7.1 8 9.2-5.1 1-8 3.8-9.6 9.8C8.8 16.5 5.9 13.7.8 12.7c4.8-2.1 6.8-4.8 8-9.2 2 3.8 4.2 3.8 7.2 0Z"
-              fill="#111"
-            />
-          </svg>
+        <div className="relative flex h-44 w-44 items-center justify-center">
+          <span className="absolute h-36 w-36 rounded-full bg-brand" />
+          <span className="relative text-4xl font-extrabold">{index + 1}</span>
         </div>
-        <p className="mt-2 text-sm font-semibold text-mute">Smart Recycle</p>
-        <h1 className="mt-3 text-[34px] font-extrabold leading-tight tracking-tight">
-          Welcome
+        <p className="mt-4 text-sm font-semibold text-mute">Smart Recycle</p>
+        <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight">
+          {slide.title}
         </h1>
-        <p className="mt-3 max-w-[260px] text-[15px] leading-6 text-mute">
-          사진을 찍으면 분리배출 순서를 알려주고, 근처 수거함까지 안내해요.
-        </p>
+        <p className="mt-3 max-w-[280px] text-[15px] leading-6 text-mute">{slide.body}</p>
+        <div className="mt-6 flex gap-1.5">
+          {SLIDES.map((item, i) => (
+            <span
+              key={item.title}
+              className={`h-1.5 rounded-full ${i === index ? "w-6 bg-ink" : "w-1.5 bg-surface"}`}
+            />
+          ))}
+        </div>
       </div>
-      <button type="button" onClick={onDone} className="btn-green">
-        시작하기
+      <button
+        type="button"
+        className="btn-green"
+        onClick={() => {
+          if (last) onDone();
+          else setIndex((value) => value + 1);
+        }}
+      >
+        {last ? "시작하기" : "다음"}
       </button>
     </div>
   );

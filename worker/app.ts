@@ -200,9 +200,8 @@ app.post("/api/recognize", async (c) => {
   );
 
   const guide = result.itemId ? await loadGuide(c.env.DB, result.itemId) : null;
-  const suggestions = fallback
-    ? await suggestItems(c.env.DB, result.categoryId)
-    : [];
+  const pool = await suggestItems(c.env.DB, result.categoryId);
+  const suggestions = pool.filter((item) => item.id !== result.itemId).slice(0, 4);
   return c.json({
     recognition: {
       id: logId,
@@ -256,7 +255,7 @@ app.get("/api/bins", async (c) => {
 
   const pad = radius / 111_000;
   const params: unknown[] = [lat - pad, lat + pad, lng - pad, lng + pad];
-  let sql = `SELECT id, type, name, address, lat, lng, phone, hours
+  let sql = `SELECT id, type, name, address, lat, lng, phone, hours, source
              FROM collection_bins
              WHERE lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?`;
   if (type) {
@@ -275,6 +274,7 @@ app.get("/api/bins", async (c) => {
       lng: number;
       phone: string | null;
       hours: string | null;
+      source: string;
     }>();
 
   const bins = (results ?? [])
@@ -311,7 +311,7 @@ app.get("/api/bins", async (c) => {
 
 app.get("/api/bins/:id", async (c) => {
   const bin = await c.env.DB.prepare(
-    `SELECT id, type, name, address, lat, lng, phone, hours
+    `SELECT id, type, name, address, lat, lng, phone, hours, source
      FROM collection_bins WHERE id = ?`,
   )
     .bind(c.req.param("id"))
