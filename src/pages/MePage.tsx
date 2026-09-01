@@ -53,45 +53,36 @@ export function MePage() {
 
   return (
     <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4">
-      <h1 className="text-2xl font-bold tracking-tight">마이</h1>
-      <div className="mt-4 rounded-3xl bg-brand-soft px-4 py-5">
-        <Sprout level={user.level} nickname={user.nickname} />
-        <div className="mt-4">
-          <div className="flex justify-between text-xs font-semibold text-brand">
-            <span>경험치</span>
-            <span>
-              {user.xpInLevel} / {user.level >= 10 ? 50 : 50}
-            </span>
-          </div>
-          <div className="mt-1 h-2 overflow-hidden rounded-full bg-white">
-            <div className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
+      <h1 className="text-[26px] font-extrabold tracking-tight">마이</h1>
+
+      <section className="mt-4 rounded-[24px] bg-brand px-5 py-5">
+        <p className="text-sm font-semibold text-ink/70">내 포인트</p>
+        <p className="mt-1 text-[34px] font-extrabold tracking-tight">
+          {user.total_points.toLocaleString()}P
+        </p>
+        <div className="mt-3 flex items-center justify-between">
+          <Sprout level={user.level} compact />
+          <div className="min-w-[120px] text-right">
+            <p className="text-xs font-bold">레벨 {user.level}</p>
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/70">
+              <div className="h-full rounded-full bg-ink" style={{ width: `${percent}%` }} />
+            </div>
+            <p className="mt-1 text-[11px] text-ink/70">
+              {user.xpInLevel}/50 XP · {user.streak_count}일 연속
+            </p>
           </div>
         </div>
-        <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-2xl bg-white py-3">
-            <dt className="text-[11px] text-mute">포인트</dt>
-            <dd className="mt-1 text-lg font-bold text-brand">{user.total_points}</dd>
-          </div>
-          <div className="rounded-2xl bg-white py-3">
-            <dt className="text-[11px] text-mute">스트릭</dt>
-            <dd className="mt-1 text-lg font-bold text-brand">{user.streak_count}일</dd>
-          </div>
-          <div className="rounded-2xl bg-white py-3">
-            <dt className="text-[11px] text-mute">인증</dt>
-            <dd className="mt-1 text-lg font-bold text-brand">{user.checkin_count}</dd>
-          </div>
-        </dl>
-      </div>
+      </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-bold">최근 7일</h2>
-        <div className="mt-2 grid grid-cols-7 gap-1">
+        <h2 className="text-base font-extrabold">최근 7일</h2>
+        <div className="mt-3 grid grid-cols-7 gap-1">
           {week.map((day) => {
             const on = user.recent_dates.includes(day);
             return (
               <div key={day} className="text-center">
                 <div
-                  className={`mx-auto h-8 w-8 rounded-full ${on ? "bg-brand" : "bg-brand-line"}`}
+                  className={`mx-auto h-9 w-9 rounded-full ${on ? "bg-brand" : "bg-surface"}`}
                 />
                 <p className="mt-1 text-[10px] text-mute">{day.slice(5)}</p>
               </div>
@@ -101,43 +92,51 @@ export function MePage() {
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-bold">별명</h2>
-        <div className="mt-2 flex gap-2">
-          <input
-            value={nickname}
-            maxLength={12}
-            onChange={(event) => setNickname(event.target.value)}
-            className="min-h-11 flex-1 rounded-xl border border-brand-line px-3 text-base outline-none focus:border-brand"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              void saveName();
-            }}
-            disabled={saving}
-            className="min-h-11 rounded-xl bg-brand px-4 text-sm font-semibold text-white"
-          >
-            저장
-          </button>
+        <h2 className="text-base font-extrabold">프로필</h2>
+        <div className="mt-3 rounded-[20px] bg-surface p-4">
+          <label className="text-xs font-bold text-mute">별명</label>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={nickname}
+              maxLength={12}
+              onChange={(event) => setNickname(event.target.value)}
+              className="field bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                void saveName();
+              }}
+              disabled={saving}
+              className="min-h-[52px] rounded-[14px] bg-ink px-4 text-sm font-bold text-white"
+            >
+              저장
+            </button>
+          </div>
         </div>
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-bold">최근 인증</h2>
+        <h2 className="text-base font-extrabold">활동 내역</h2>
         {checkins.length === 0 ? (
-          <p className="mt-2 text-sm text-mute">아직 인증 기록이 없어요.</p>
+          <p className="mt-3 text-sm text-mute">아직 인증 기록이 없어요.</p>
         ) : (
-          <ul className="mt-2 space-y-2">
+          <ul className="mt-3 space-y-2">
             {checkins.map((row) => (
               <li
                 key={row.id}
-                className="flex items-center justify-between rounded-2xl border border-brand-line px-4 py-3 text-sm"
+                className="flex items-center justify-between rounded-[18px] bg-surface px-4 py-3.5"
               >
-                <span>
-                  <span className="block font-semibold">{row.name_ko ?? "품목"}</span>
-                  <span className="text-xs text-mute">{row.checkin_date}</span>
+                <span className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand font-extrabold">
+                    +
+                  </span>
+                  <span>
+                    <span className="block font-extrabold">{row.name_ko ?? "품목"}</span>
+                    <span className="text-xs text-mute">{row.checkin_date}</span>
+                  </span>
                 </span>
-                <span className="font-semibold text-brand">+{row.points}P</span>
+                <span className="font-extrabold">+{row.points}P</span>
               </li>
             ))}
           </ul>

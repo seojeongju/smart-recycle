@@ -12,6 +12,10 @@ export function SearchPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    setQuery(initial);
+  }, [initial]);
+
+  useEffect(() => {
     void api<{ categories: Category[] }>("/api/categories").then((data) => {
       setCategories(data.categories);
     });
@@ -34,23 +38,25 @@ export function SearchPage() {
 
   return (
     <div className="flex flex-1 flex-col px-5 pt-4">
-      <h1 className="text-2xl font-bold tracking-tight">품목 검색</h1>
+      <h1 className="text-[26px] font-extrabold tracking-tight">검색</h1>
       <label className="mt-4 block">
         <span className="sr-only">검색어</span>
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="페트병, 약, 배달용기..."
-          className="min-h-12 w-full rounded-2xl border border-brand-line bg-white px-4 text-base outline-none focus:border-brand"
+          className="field"
         />
       </label>
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+      <div className="hide-scroll mt-3 flex gap-2 overflow-x-auto pb-1">
         {categories.map((category) => (
           <button
             key={category.id}
             type="button"
             onClick={() => setQuery(category.name_ko)}
-            className="shrink-0 rounded-full bg-brand-soft px-3 py-1.5 text-xs font-semibold text-brand"
+            className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${
+              query === category.name_ko ? "bg-brand text-ink" : "bg-surface text-ink"
+            }`}
           >
             {category.name_ko}
           </button>
@@ -61,16 +67,22 @@ export function SearchPage() {
         {!busy && query.trim() && items.length === 0 ? (
           <p className="text-sm text-mute">검색 결과가 없어요. 다른 이름으로 시도해 보세요.</p>
         ) : null}
+        {!query.trim() ? (
+          <p className="text-sm text-mute">품목 이름이나 위의 카테고리를 눌러 보세요.</p>
+        ) : null}
         <ul className="space-y-2">
           {items.map((item) => (
             <li key={item.id}>
               <Link
                 to={`/items/${item.id}`}
-                className="block rounded-2xl border border-brand-line px-4 py-3"
+                className="flex items-center justify-between rounded-[18px] bg-surface px-4 py-3.5"
               >
-                <p className="text-xs font-semibold text-brand">{item.category_name}</p>
-                <p className="mt-0.5 font-semibold">{item.name_ko}</p>
-                <p className="mt-1 text-sm text-mute">{item.summary_ko}</p>
+                <span>
+                  <span className="text-[11px] font-bold text-mute">{item.category_name}</span>
+                  <span className="mt-0.5 block font-extrabold">{item.name_ko}</span>
+                  <span className="mt-1 block text-sm text-mute">{item.summary_ko}</span>
+                </span>
+                <span className="ml-3 text-mute">›</span>
               </Link>
             </li>
           ))}

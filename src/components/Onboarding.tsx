@@ -4,57 +4,35 @@ type Props = {
 
 export function Onboarding({ onDone }: Props) {
   return (
-    <div className="absolute inset-0 z-40 flex flex-col bg-white px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <p className="text-sm font-semibold text-brand">Smart Recycle</p>
-      <h1 className="mt-6 text-[28px] font-bold leading-tight tracking-tight">
-        찍고, 확인하고,
-        <br />
-        바르게 버려요
-      </h1>
-      <ul className="mt-8 space-y-4 text-[15px] text-ink">
-        <li className="flex gap-3 rounded-2xl bg-brand-soft p-4">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
-            1
-          </span>
-          <div>
-            <p className="font-semibold">사진으로 품목 확인</p>
-            <p className="mt-1 text-sm text-mute">
-              카메라로 찍거나 앨범에서 올리면 배출 순서를 알려줘요.
-            </p>
-          </div>
-        </li>
-        <li className="flex gap-3 rounded-2xl border border-brand-line p-4">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand">
-            2
-          </span>
-          <div>
-            <p className="font-semibold">특수 수거함 지도</p>
-            <p className="mt-1 text-sm text-mute">
-              폐의약품, 소형가전, 의류함 위치를 내 근처에서 찾아요.
-            </p>
-          </div>
-        </li>
-        <li className="flex gap-3 rounded-2xl border border-brand-line p-4">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand">
-            3
-          </span>
-          <div>
-            <p className="font-semibold">하루 한 번 인증</p>
-            <p className="mt-1 text-sm text-mute">
-              올바르게 버리면 포인트가 쌓이고 새싹이가 자라요.
-            </p>
-          </div>
-        </li>
-      </ul>
-      <p className="mt-auto text-center text-xs leading-5 text-mute">
-        위치와 카메라는 인식·지도 기능을 쓸 때만 요청해요.
-        위치 좌표는 서버에 저장하지 않습니다.
-      </p>
-      <button
-        type="button"
-        onClick={onDone}
-        className="mt-4 min-h-12 w-full rounded-2xl bg-brand text-[16px] font-semibold text-white"
-      >
+    <div className="absolute inset-0 z-40 flex flex-col bg-white px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <div className="relative flex h-56 w-56 items-center justify-center">
+          <span className="absolute h-44 w-44 rounded-full bg-brand" />
+          <span className="absolute left-3 top-8 h-14 w-14 rounded-full bg-brand-dark/30" />
+          <span className="absolute bottom-10 right-2 h-10 w-10 rounded-full bg-white/70" />
+          <svg
+            className="relative"
+            width="88"
+            height="88"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+          >
+            <path
+              d="M12 3.5c1.2 4.4 3.2 7.1 8 9.2-5.1 1-8 3.8-9.6 9.8C8.8 16.5 5.9 13.7.8 12.7c4.8-2.1 6.8-4.8 8-9.2 2 3.8 4.2 3.8 7.2 0Z"
+              fill="#111"
+            />
+          </svg>
+        </div>
+        <p className="mt-2 text-sm font-semibold text-mute">Smart Recycle</p>
+        <h1 className="mt-3 text-[34px] font-extrabold leading-tight tracking-tight">
+          Welcome
+        </h1>
+        <p className="mt-3 max-w-[260px] text-[15px] leading-6 text-mute">
+          사진을 찍으면 분리배출 순서를 알려주고, 근처 수거함까지 안내해요.
+        </p>
+      </div>
+      <button type="button" onClick={onDone} className="btn-green">
         시작하기
       </button>
     </div>

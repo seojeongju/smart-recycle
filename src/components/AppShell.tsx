@@ -3,7 +3,7 @@ import { Outlet } from "react-router";
 import { BottomNav } from "./BottomNav";
 import { Onboarding } from "./Onboarding";
 
-const KEY = "smart-recycle_onboarded";
+const KEY = "smart-recycle_onboarded_v2";
 
 export function AppShell() {
   const [showOnboarding, setShowOnboarding] = useState(false);

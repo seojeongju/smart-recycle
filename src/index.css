@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #2563eb;
-  --color-brand-dark: #1d4ed8;
-  --color-brand-soft: #eff6ff;
-  --color-brand-line: #dbeafe;
-  --color-ink: #0f172a;
-  --color-mute: #64748b;
+  --color-brand: #7be04a;
+  --color-brand-dark: #4caf2a;
+  --color-brand-soft: #f2fbe8;
+  --color-brand-line: #d9f5c4;
+  --color-ink: #111111;
+  --color-mute: #8d8d8d;
+  --color-surface: #f4f4f4;
+  --color-card: #ffffff;
   --font-sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui,
     sans-serif;
 }
@@ -22,7 +24,7 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--color-ink);
-  background: #e2e8f0;
+  background: #ececec;
   -webkit-font-smoothing: antialiased;
   text-size-adjust: 100%;
 }
@@ -48,7 +50,7 @@ a {
   .phone-shell {
     max-width: 430px;
     margin: 0 auto;
-    box-shadow: 0 0 0 1px #e2e8f0, 0 16px 40px rgb(15 23 42 / 0.08);
+    box-shadow: 0 0 0 1px #ececec, 0 18px 48px rgb(17 17 17 / 0.08);
   }
 }
 
@@ -58,4 +60,47 @@ a {
 
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+.hide-scroll {
+  scrollbar-width: none;
+}
+
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.btn-green {
+  min-height: 54px;
+  width: 100%;
+  border-radius: 16px;
+  background: var(--color-brand);
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.btn-dark {
+  min-height: 54px;
+  width: 100%;
+  border-radius: 16px;
+  background: var(--color-ink);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.field {
+  min-height: 52px;
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  background: var(--color-surface);
+  padding: 0 16px;
+  font-size: 16px;
+  outline: none;
+}
+
+.field:focus {
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
 }

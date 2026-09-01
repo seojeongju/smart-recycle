@@ -41,8 +41,8 @@ export function ItemPage() {
 
   return (
     <div className="flex-1 overflow-y-auto px-5 pt-4">
-      <Link to="/search" className="text-sm font-semibold text-brand">
-        검색으로
+      <Link to="/search" className="text-sm font-extrabold">
+        ← 검색
       </Link>
       {error ? <p className="mt-6 text-sm text-mute">{error}</p> : null}
       {!guide && !error ? (

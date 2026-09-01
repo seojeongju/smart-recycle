@@ -78,8 +78,8 @@ export function MapPage() {
     map.setView([origin.lat, origin.lng], map.getZoom() || 15);
     L.circleMarker([origin.lat, origin.lng], {
       radius: 8,
-      color: "#1D4ED8",
-      fillColor: "#2563EB",
+      color: "#111111",
+      fillColor: "#7BE04A",
       fillOpacity: 1,
       weight: 3,
     })
@@ -89,8 +89,8 @@ export function MapPage() {
     for (const bin of bins) {
       const marker = L.circleMarker([bin.lat, bin.lng], {
         radius: 9,
-        color: "#1D4ED8",
-        fillColor: "#93C5FD",
+        color: "#111111",
+        fillColor: "#7BE04A",
         fillOpacity: 1,
         weight: 2,
       }).addTo(layer);
@@ -103,7 +103,7 @@ export function MapPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="px-5 pt-4">
-        <h1 className="text-2xl font-bold tracking-tight">특수 수거함</h1>
+        <h1 className="text-[26px] font-extrabold tracking-tight">수거함</h1>
         {denied ? (
           <p className="mt-1 text-xs text-mute">
             위치 권한이 없어 서울시청 기준으로 보여요.
@@ -124,8 +124,8 @@ export function MapPage() {
                   else next.delete("type");
                   setParams(next, { replace: true });
                 }}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  active ? "bg-brand text-white" : "bg-brand-soft text-brand"
+                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${
+                  active ? "bg-brand text-ink" : "bg-surface text-ink"
                 }`}
               >
                 {filter.label}
@@ -134,14 +134,14 @@ export function MapPage() {
           })}
         </div>
       </div>
-      <div ref={mapEl} className="min-h-[240px] flex-1 bg-brand-soft" />
-      <div className="max-h-48 overflow-y-auto border-t border-brand-line bg-white px-4 py-3">
+      <div ref={mapEl} className="min-h-[240px] flex-1 bg-surface" />
+      <div className="max-h-52 overflow-y-auto bg-white px-4 py-3">
         {selected ? (
           <div>
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="mb-2 text-sm font-semibold text-brand"
+              className="mb-2 text-sm font-extrabold"
             >
               목록으로
             </button>
@@ -162,7 +162,7 @@ export function MapPage() {
                   className="flex w-full items-start justify-between gap-3 text-left"
                 >
                   <span>
-                    <span className="text-xs font-semibold text-brand">
+                    <span className="text-[11px] font-bold text-mute">
                       {BIN_LABELS[bin.type] ?? bin.type}
                     </span>
                     <span className="mt-0.5 block text-sm font-semibold">{bin.name}</span>
@@ -186,7 +186,7 @@ function BinDetail({ bin }: { bin: Bin }) {
   const maps = `https://map.kakao.com/link/to/${encodeURIComponent(bin.name)},${bin.lat},${bin.lng}`;
   return (
     <div>
-      <p className="text-xs font-semibold text-brand">
+      <p className="text-[11px] font-bold text-mute">
         {BIN_LABELS[bin.type] ?? bin.type}
       </p>
       <h2 className="mt-0.5 font-bold">{bin.name}</h2>
@@ -194,7 +194,7 @@ function BinDetail({ bin }: { bin: Bin }) {
       {bin.hours ? <p className="mt-1 text-sm text-mute">{bin.hours}</p> : null}
       {bin.phone ? <p className="mt-1 text-sm text-mute">{bin.phone}</p> : null}
       {bin.distance_m != null ? (
-        <p className="mt-1 text-sm font-semibold text-brand">
+        <p className="mt-1 text-sm font-extrabold">
           {formatDistance(bin.distance_m)}
         </p>
       ) : null}
@@ -202,7 +202,7 @@ function BinDetail({ bin }: { bin: Bin }) {
         href={maps}
         target="_blank"
         rel="noreferrer"
-        className="mt-3 flex min-h-11 items-center justify-center rounded-xl bg-brand text-sm font-semibold text-white"
+        className="btn-dark mt-3"
       >
         길찾기
       </a>
