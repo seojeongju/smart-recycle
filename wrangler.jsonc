@@ -16,7 +16,7 @@
     {
       "binding": "DB",
       "database_name": "smart-recycle-db",
-      "database_id": "00000000-0000-4000-8000-000000000001",
+      "database_id": "bdaab975-8617-48a6-b208-d02992426162",
       "migrations_dir": "migrations"
     }
   ],
