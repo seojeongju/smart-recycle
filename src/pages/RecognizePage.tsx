@@ -227,23 +227,21 @@ export function RecognizePage() {
         />
       ) : null}
 
-      <header className="flex items-center justify-between">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-mute">
-            Smart Recycle
-          </p>
-          <h1 className="mt-1 text-[24px] font-extrabold tracking-tight">
+      <header className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold text-mute">Smart Recycle</p>
+          <h1 className="mt-1 truncate text-[22px] font-extrabold tracking-tight">
             안녕하세요, {nickname}
           </h1>
         </div>
-        <span className="float-slow flex h-11 w-11 items-center justify-center rounded-2xl bg-brand font-extrabold shadow-[0_8px_18px_rgb(123_224_74/0.35)]">
+        <span className="float-slow flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand font-extrabold shadow-[0_8px_18px_rgb(123_224_74/0.35)]">
           SR
         </span>
       </header>
 
       <section className="hero-card mt-5 rounded-[26px] px-5 py-6">
         <p className="text-sm font-semibold text-ink/70">한 장이면 끝</p>
-        <h2 className="mt-1 text-[22px] font-extrabold leading-snug tracking-tight">
+        <h2 className="mt-1 max-w-[16ch] text-[22px] font-extrabold leading-snug tracking-tight">
           사진 찍고
           <br />
           바르게 버리기
@@ -284,7 +282,7 @@ export function RecognizePage() {
             <Link
               key={item.label}
               to={`/search?q=${encodeURIComponent(item.q)}`}
-              className="tile text-center"
+              className="tile min-w-0 text-center"
             >
               <span
                 className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px]"
@@ -292,7 +290,9 @@ export function RecognizePage() {
               >
                 <FeatureIcon name={item.icon} />
               </span>
-              <span className="mt-1.5 block text-[11px] font-semibold">{item.label}</span>
+              <span className="mt-1.5 block px-0.5 text-[10px] font-semibold leading-tight">
+                {item.label}
+              </span>
             </Link>
           ))}
         </div>
@@ -304,9 +304,9 @@ export function RecognizePage() {
           {TIPS.map((tip) => (
             <article
               key={tip.title}
-              className="min-w-[228px] rounded-[22px] bg-surface px-4 py-4 shadow-[0_8px_24px_rgb(17_17_17/0.04)]"
+              className="w-[min(220px,78%)] shrink-0 rounded-[22px] bg-surface px-4 py-4 shadow-[0_8px_24px_rgb(17_17_17/0.04)]"
             >
-              <p className="font-extrabold">{tip.title}</p>
+              <p className="font-extrabold leading-snug">{tip.title}</p>
               <p className="mt-1 text-sm leading-5 text-mute">{tip.body}</p>
             </article>
           ))}

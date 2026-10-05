@@ -63,7 +63,7 @@ export function GuideView({
         <p className="text-xs font-bold text-ink/70">{guide.category_name}</p>
         <h2 className="mt-1 text-[26px] font-extrabold tracking-tight">{guide.name_ko}</h2>
         <p className="mt-2 text-sm leading-6">{guide.summary_ko}</p>
-        <p className="mt-3 inline-flex rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold">
+        <p className="mt-3 inline-flex max-w-full rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold leading-snug">
           {guide.bin_type}
         </p>
       </section>

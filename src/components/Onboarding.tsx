@@ -34,11 +34,9 @@ export function Onboarding({ onDone }: Props) {
             {index + 1}
           </span>
         </div>
-        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.16em] text-mute">
-          Smart Recycle
-        </p>
-        <div key={slide.title} className="fade-swap">
-          <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight">
+        <p className="mt-4 text-[11px] font-bold text-mute">Smart Recycle</p>
+        <div key={slide.title} className="fade-swap px-1">
+          <h1 className="mt-3 text-[26px] font-extrabold leading-tight tracking-tight">
             {slide.title}
           </h1>
           <p className="mt-3 max-w-[280px] text-[15px] leading-6 text-mute">{slide.body}</p>

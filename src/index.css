@@ -29,6 +29,8 @@ body {
   background: #e8ebe6;
   -webkit-font-smoothing: antialiased;
   text-size-adjust: 100%;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 button,
@@ -167,6 +169,7 @@ a {
 
 .hero-card {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   background: linear-gradient(145deg, #97f066 0%, #7be04a 48%, #58c92e 100%);
   box-shadow: 0 16px 36px rgb(88 201 46 / 0.22);

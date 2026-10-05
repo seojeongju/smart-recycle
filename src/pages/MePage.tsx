@@ -110,7 +110,7 @@ export function MePage() {
                     on ? "bg-brand shadow-[0_6px_12px_rgb(123_224_74/0.35)]" : "bg-surface"
                   }`}
                 />
-                <p className="mt-1 text-[10px] text-mute">{day.slice(5)}</p>
+                <p className="mt-1 text-[10px] leading-tight text-mute">{day.slice(5)}</p>
               </div>
             );
           })}

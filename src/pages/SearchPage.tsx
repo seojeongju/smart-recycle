@@ -112,11 +112,11 @@ export function SearchPage() {
                   to={`/items/${item.id}`}
                   className="pressable flex items-center justify-between rounded-[18px] bg-surface px-4 py-3.5"
                 >
-                  <span>
-                    <span className="text-[11px] font-bold text-mute">{item.category_name}</span>
-                    <span className="mt-0.5 block font-extrabold">{item.name_ko}</span>
-                    <span className="mt-1 block text-sm text-mute">{item.summary_ko}</span>
-                  </span>
+                <span className="min-w-0">
+                  <span className="text-[11px] font-bold text-mute">{item.category_name}</span>
+                  <span className="mt-0.5 block font-extrabold leading-snug">{item.name_ko}</span>
+                  <span className="mt-1 block text-sm leading-5 text-mute">{item.summary_ko}</span>
+                </span>
                   <span className="ml-3 text-mute">›</span>
                 </Link>
               </li>

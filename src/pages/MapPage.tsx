@@ -186,12 +186,14 @@ export function MapPage() {
                   }}
                   className="flex w-full items-start justify-between gap-3 py-3 text-left"
                 >
-                  <span>
-                    <span className="text-[11px] font-bold text-mute">
+                  <span className="min-w-0">
+                    <span className="block text-[11px] font-bold leading-snug text-mute">
                       {BIN_LABELS[bin.type] ?? bin.type}
                       {bin.source ? ` · ${sourceLabel(bin)}` : ""}
                     </span>
-                    <span className="mt-0.5 block text-sm font-semibold">{bin.name}</span>
+                    <span className="mt-0.5 block text-sm font-semibold leading-snug">
+                      {bin.name}
+                    </span>
                   </span>
                   {bin.distance_m != null ? (
                     <span className="shrink-0 text-xs text-mute">
