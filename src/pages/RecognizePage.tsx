@@ -11,6 +11,7 @@ import {
 } from "../lib/camera";
 import { readRecentSearches } from "../lib/recent";
 import { CollectionBanner } from "../components/CollectionBanner";
+import { DistrictSuggest } from "../components/DistrictSuggest";
 import { MissionList } from "../components/MissionList";
 import { QuizCard } from "../components/QuizCard";
 import {
@@ -48,6 +49,12 @@ const STAGES = [
   "사진을 정리하는 중",
   "품목을 살펴보는 중",
   "배출 방법을 찾는 중",
+] as const;
+
+const DEMOS = [
+  { id: "pet-clear", label: "페트", src: "/demo/pet-clear.svg" },
+  { id: "medicine", label: "약", src: "/demo/medicine.svg" },
+  { id: "delivery-container", label: "배달용기", src: "/demo/delivery-container.svg" },
 ] as const;
 
 const TIPS = [
@@ -111,8 +118,11 @@ export function RecognizePage() {
   }
 
   function setPreview(url: string | null) {
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-    previewRef.current = url;
+    if (previewRef.current) {
+      URL.revokeObjectURL(previewRef.current);
+      previewRef.current = null;
+    }
+    if (url?.startsWith("blob:")) previewRef.current = url;
     setPreviewUrl(url);
   }
 
@@ -142,6 +152,7 @@ export function RecognizePage() {
   }
 
   async function sendFeedback(itemId: string, logId: string, helpful: boolean) {
+    if (logId.startsWith("demo-")) return;
     try {
       await api("/api/recognize/feedback", {
         method: "POST",
@@ -194,6 +205,34 @@ export function RecognizePage() {
       setFlow("idle");
       setPreview(null);
       setError(err instanceof Error ? err.message : "인식에 실패했어요.");
+    } finally {
+      if (gen === genRef.current) setBusy(false);
+    }
+  }
+
+  async function onDemo(itemId: string, src: string) {
+    const gen = ++genRef.current;
+    setPreview(src);
+    setFlow("loading");
+    setStageIdx(0);
+    setBusy(true);
+    setError(null);
+    setFallback(false);
+    setSuggestions([]);
+    setPending(null);
+    closeCamera();
+    try {
+      const data = await api<RecognizeResponse>(
+        `/api/demo/recognize?item=${encodeURIComponent(itemId)}`,
+      );
+      if (gen !== genRef.current) return;
+      setPending(data);
+      setFlow("confirm");
+    } catch (err) {
+      if (gen !== genRef.current) return;
+      setFlow("idle");
+      setPreview(null);
+      setError(err instanceof Error ? err.message : "시연 샘플을 불러오지 못했어요.");
     } finally {
       if (gen === genRef.current) setBusy(false);
     }
@@ -287,7 +326,37 @@ export function RecognizePage() {
         </div>
       </section>
 
-      {home ? <CollectionBanner schedule={home.schedule} compact /> : null}
+      {home ? (
+        <>
+          <DistrictSuggest
+            currentId={home.district_id}
+            onPicked={() => {
+              void loadHome();
+            }}
+          />
+          <CollectionBanner schedule={home.schedule} compact />
+        </>
+      ) : null}
+
+      <section className="mt-4">
+        <p className="text-[11px] font-bold text-mute">시연 샘플</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {DEMOS.map((demo) => (
+            <button
+              key={demo.id}
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                void onDemo(demo.id, demo.src);
+              }}
+              className="pressable overflow-hidden rounded-[18px] bg-surface text-left disabled:opacity-60"
+            >
+              <img src={demo.src} alt="" className="h-16 w-full object-cover" />
+              <span className="block px-2 py-2 text-xs font-extrabold">{demo.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-7">
         <div className="flex items-center justify-between">

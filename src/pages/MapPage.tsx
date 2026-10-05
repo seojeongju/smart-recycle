@@ -100,10 +100,11 @@ export function MapPage() {
       .bindTooltip("내 위치", { permanent: false });
 
     for (const bin of bins) {
+      const warned = hasReports(bin);
       const marker = L.circleMarker([bin.lat, bin.lng], {
         radius: 9,
         color: "#111111",
-        fillColor: "#7BE04A",
+        fillColor: warned ? "#F59E0B" : "#7BE04A",
         fillOpacity: 1,
         weight: 2,
       }).addTo(layer);
@@ -200,6 +201,11 @@ export function MapPage() {
                     <span className="mt-0.5 block text-sm font-semibold leading-snug">
                       {bin.name}
                     </span>
+                    {hasReports(bin) ? (
+                      <span className="mt-1 block text-[11px] font-bold text-ink">
+                        {reportLine(bin)}
+                      </span>
+                    ) : null}
                   </span>
                   {bin.distance_m != null ? (
                     <span className="shrink-0 text-xs text-mute">
@@ -214,6 +220,14 @@ export function MapPage() {
       </section>
     </div>
   );
+}
+
+function hasReports(bin: Bin): boolean {
+  return (bin.missing_24h ?? 0) + (bin.closed_24h ?? 0) > 0;
+}
+
+function reportLine(bin: Bin): string {
+  return `제보 · 없음 ${bin.missing_24h ?? 0} · 닫힘 ${bin.closed_24h ?? 0}`;
 }
 
 function sourceLabel(bin: Bin): string {

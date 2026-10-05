@@ -28,6 +28,14 @@ export type GuidePayload = {
   steps: GuideStep[];
   tips: UpcycleTip[];
   twins?: ItemTwin[];
+  collection?: CollectionHint;
+};
+
+export type CollectionHint = {
+  anytime: boolean;
+  is_today: boolean;
+  district_name: string | null;
+  next_label: string | null;
 };
 
 export type SearchItem = {
@@ -126,6 +134,7 @@ export type BagItem = {
   category_name: string;
   bin_type: string;
   special_bin_type: string | null;
+  collection?: CollectionHint;
 };
 
 export type HomePayload = {

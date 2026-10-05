@@ -28,4 +28,10 @@ export type GuidePayload = {
   steps: GuideStep[];
   tips: UpcycleTip[];
   twins: ItemTwin[];
+  collection?: {
+    anytime: boolean;
+    is_today: boolean;
+    district_name: string | null;
+    next_label: string | null;
+  };
 };

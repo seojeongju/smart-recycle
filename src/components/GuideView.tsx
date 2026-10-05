@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
+import { CollectionHint } from "./CollectionHint";
 import { pickAlbumFile } from "../lib/camera";
 import type { GuidePayload } from "../types";
 
@@ -67,6 +68,8 @@ export function GuideView({
           {guide.bin_type}
         </p>
       </section>
+
+      <CollectionHint hint={guide.collection} />
 
       {guide.twins && guide.twins.length > 0 ? (
         <section>

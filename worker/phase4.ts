@@ -55,6 +55,13 @@ export type QuizView = {
   item_id: string;
 };
 
+export type CollectionHint = {
+  anytime: boolean;
+  is_today: boolean;
+  district_name: string | null;
+  next_label: string | null;
+};
+
 export type BagItem = {
   id: string;
   item_id: string;
@@ -63,7 +70,64 @@ export type BagItem = {
   category_name: string;
   bin_type: string;
   special_bin_type: string | null;
+  collection?: CollectionHint;
 };
+
+const ANYTIME_CATEGORIES = new Set([
+  "medicine",
+  "battery",
+  "clothing",
+  "small_electronics",
+  "food",
+  "general",
+]);
+
+export function hintFromSchedule(
+  schedule: SchedulePayload,
+  categoryId: string,
+): CollectionHint {
+  if (ANYTIME_CATEGORIES.has(categoryId)) {
+    return {
+      anytime: true,
+      is_today: true,
+      district_name: schedule.district
+        ? `${schedule.district.city_ko} ${schedule.district.name_ko}`
+        : null,
+      next_label: null,
+    };
+  }
+  if (!schedule.district) {
+    return { anytime: false, is_today: false, district_name: null, next_label: null };
+  }
+  const districtName = `${schedule.district.city_ko} ${schedule.district.name_ko}`;
+  const isToday = schedule.today.categories.some((row) => row.id === categoryId);
+  if (isToday) {
+    return {
+      anytime: false,
+      is_today: true,
+      district_name: districtName,
+      next_label: schedule.today.label,
+    };
+  }
+  const todayWd = schedule.today.weekday;
+  for (let offset = 1; offset <= 7; offset += 1) {
+    const slot = schedule.week[(todayWd + offset) % 7];
+    if (slot?.categories.some((row) => row.id === categoryId)) {
+      return {
+        anytime: false,
+        is_today: false,
+        district_name: districtName,
+        next_label: slot.label,
+      };
+    }
+  }
+  return {
+    anytime: false,
+    is_today: false,
+    district_name: districtName,
+    next_label: null,
+  };
+}
 
 const DISCLAIMER = "구청 안내를 참고한 일반 일정이에요. 단지 규정과 현장 안내를 우선하세요.";
 
@@ -304,7 +368,11 @@ export async function gradeQuiz(
   };
 }
 
-export async function loadBag(db: D1Database, userId: string): Promise<BagItem[]> {
+export async function loadBag(
+  db: D1Database,
+  userId: string,
+  districtId: string | null = null,
+): Promise<BagItem[]> {
   const { results } = await db
     .prepare(
       `SELECT ck.id, ck.item_id, i.name_ko, i.category_id, i.special_bin_type,
@@ -317,13 +385,25 @@ export async function loadBag(db: D1Database, userId: string): Promise<BagItem[]
     .bind(userId, kstDate())
     .all<BagItem>();
 
-  return (results ?? []).sort((a, b) => {
-    const left = BAG_RANK[a.category_id] ?? 50;
-    const right = BAG_RANK[b.category_id] ?? 50;
-    if (left !== right) return left - right;
-    return a.name_ko.localeCompare(b.name_ko, "ko");
-  });
+  const schedule = await loadSchedule(db, districtId);
+  return (results ?? [])
+    .map((item) => ({
+      ...item,
+      collection: hintFromSchedule(schedule, item.category_id),
+    }))
+    .sort((a, b) => {
+      const left = BAG_RANK[a.category_id] ?? 50;
+      const right = BAG_RANK[b.category_id] ?? 50;
+      if (left !== right) return left - right;
+      return a.name_ko.localeCompare(b.name_ko, "ko");
+    });
 }
+
+export const DEMO_ITEMS = [
+  "pet-clear",
+  "medicine",
+  "delivery-container",
+] as const;
 
 export type BinReportCounts = {
   missing_24h: number;

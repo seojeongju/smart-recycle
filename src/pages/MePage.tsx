@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { api } from "../api";
 import { BagList } from "../components/BagList";
 import { CollectionBanner } from "../components/CollectionBanner";
+import { DistrictSuggest } from "../components/DistrictSuggest";
 import { ComplexNote } from "../components/ComplexNote";
 import { MissionList } from "../components/MissionList";
 import { Sprout } from "../components/Sprout";
@@ -142,6 +143,12 @@ export function MePage() {
 
       <section id="district" className="mt-7">
         <h2 className="text-base font-extrabold">우리 동네</h2>
+        <DistrictSuggest
+          currentId={user.district_id ?? null}
+          onPicked={() => {
+            void load();
+          }}
+        />
         <select
           value={districtId}
           onChange={(event) => {

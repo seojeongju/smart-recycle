@@ -11,7 +11,9 @@ import {
 import {
   claimMission,
   createBinReport,
+  DEMO_ITEMS,
   gradeQuiz,
+  hintFromSchedule,
   listDistricts,
   loadBag,
   loadMissions,
@@ -126,7 +128,51 @@ app.get("/api/items/:id", async (c) => {
   if (!guide) {
     return c.json(jsonError("NOT_FOUND", "해당 품목 가이드를 찾을 수 없어요."), 404);
   }
-  return c.json({ guide });
+  const user = await c.env.DB.prepare(
+    `SELECT district_id FROM users WHERE id = ?`,
+  )
+    .bind(c.get("userId"))
+    .first<{ district_id: string | null }>();
+  const schedule = await loadSchedule(c.env.DB, user?.district_id ?? null);
+  return c.json({
+    guide: {
+      ...guide,
+      collection: hintFromSchedule(schedule, guide.category_id),
+    },
+  });
+});
+
+app.get("/api/demo/recognize", async (c) => {
+  const itemId = (c.req.query("item") ?? "").trim();
+  if (!DEMO_ITEMS.includes(itemId as (typeof DEMO_ITEMS)[number])) {
+    return c.json(jsonError("BAD_REQUEST", "시연 샘플을 찾을 수 없어요."), 400);
+  }
+  const guide = await loadGuide(c.env.DB, itemId);
+  if (!guide) {
+    return c.json(jsonError("NOT_FOUND", "해당 품목 가이드를 찾을 수 없어요."), 404);
+  }
+  const user = await c.env.DB.prepare(
+    `SELECT district_id FROM users WHERE id = ?`,
+  )
+    .bind(c.get("userId"))
+    .first<{ district_id: string | null }>();
+  const schedule = await loadSchedule(c.env.DB, user?.district_id ?? null);
+  const pool = await suggestItems(c.env.DB, guide.category_id);
+  return c.json({
+    recognition: {
+      id: `demo-${itemId}`,
+      item_id: guide.item_id,
+      category_id: guide.category_id,
+      label_ko: guide.name_ko,
+      confidence: 0.94,
+    },
+    guide: {
+      ...guide,
+      collection: hintFromSchedule(schedule, guide.category_id),
+    },
+    fallback: false,
+    suggestions: pool.filter((item) => item.id !== itemId).slice(0, 3),
+  });
 });
 
 app.post("/api/recognize", async (c) => {
@@ -423,7 +469,12 @@ app.post("/api/quiz", async (c) => {
 });
 
 app.get("/api/bag", async (c) => {
-  const items = await loadBag(c.env.DB, c.get("userId"));
+  const user = await c.env.DB.prepare(
+    `SELECT district_id FROM users WHERE id = ?`,
+  )
+    .bind(c.get("userId"))
+    .first<{ district_id: string | null }>();
+  const items = await loadBag(c.env.DB, c.get("userId"), user?.district_id ?? null);
   return c.json({ items });
 });
 
@@ -438,7 +489,7 @@ app.get("/api/home", async (c) => {
     loadSchedule(c.env.DB, user?.district_id ?? null),
     loadMissions(c.env.DB, userId),
     loadQuiz(c.env.DB),
-    loadBag(c.env.DB, userId),
+    loadBag(c.env.DB, userId, user?.district_id ?? null),
   ]);
   return c.json({
     nickname: user?.nickname ?? "새싹이",
