@@ -165,7 +165,13 @@ export function MapPage() {
             >
               목록으로
             </button>
-            <BinDetail bin={selected} />
+            <BinDetail
+              bin={selected}
+              onReported={(next) => {
+                setSelected(next);
+                setBins((prev) => prev.map((row) => (row.id === next.id ? next : row)));
+              }}
+            />
           </div>
         ) : list.length === 0 ? (
           <div className="px-4 pb-4">
@@ -217,8 +223,41 @@ function sourceLabel(bin: Bin): string {
   return "참고 위치";
 }
 
-function BinDetail({ bin }: { bin: Bin }) {
+function BinDetail({
+  bin,
+  onReported,
+}: {
+  bin: Bin;
+  onReported?: (next: Bin) => void;
+}) {
   const maps = `https://map.kakao.com/link/to/${encodeURIComponent(bin.name)},${bin.lat},${bin.lng}`;
+  const [busy, setBusy] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function report(kind: "missing" | "closed") {
+    setBusy(kind);
+    try {
+      const data = await api<{ message: string }>(`/api/bins/${bin.id}/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind }),
+      });
+      setMessage(data.message);
+      onReported?.({
+        ...bin,
+        missing_24h: (bin.missing_24h ?? 0) + (kind === "missing" ? 1 : 0),
+        closed_24h: (bin.closed_24h ?? 0) + (kind === "closed" ? 1 : 0),
+      });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "제보하지 못했어요.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const missing = bin.missing_24h ?? 0;
+  const closed = bin.closed_24h ?? 0;
+
   return (
     <div>
       <p className="text-[11px] font-bold text-mute">
@@ -232,9 +271,37 @@ function BinDetail({ bin }: { bin: Bin }) {
       {bin.distance_m != null ? (
         <p className="mt-2 text-sm font-extrabold">{formatDistance(bin.distance_m)}</p>
       ) : null}
+      {missing > 0 || closed > 0 ? (
+        <p className="mt-2 text-xs font-semibold text-mute">
+          최근 24시간 제보 · 없음 {missing} · 닫힘 {closed}
+        </p>
+      ) : null}
       <a href={maps} target="_blank" rel="noreferrer" className="btn-dark mt-4">
         길찾기
       </a>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => {
+            void report("missing");
+          }}
+          className="pressable min-h-11 rounded-2xl bg-surface text-xs font-bold"
+        >
+          {busy === "missing" ? "제보 중" : "없음 제보"}
+        </button>
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => {
+            void report("closed");
+          }}
+          className="pressable min-h-11 rounded-2xl bg-surface text-xs font-bold"
+        >
+          {busy === "closed" ? "제보 중" : "닫힘 제보"}
+        </button>
+      </div>
+      {message ? <p className="mt-2 text-center text-xs font-semibold">{message}</p> : null}
     </div>
   );
 }

@@ -10,7 +10,15 @@ import {
   stopStream,
 } from "../lib/camera";
 import { readRecentSearches } from "../lib/recent";
-import { FALLBACK_CHIPS, type GuidePayload, type SearchItem } from "../types";
+import { CollectionBanner } from "../components/CollectionBanner";
+import { MissionList } from "../components/MissionList";
+import { QuizCard } from "../components/QuizCard";
+import {
+  FALLBACK_CHIPS,
+  type GuidePayload,
+  type HomePayload,
+  type SearchItem,
+} from "../types";
 
 type RecognizeResponse = {
   recognition: {
@@ -64,11 +72,20 @@ export function RecognizePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [stageIdx, setStageIdx] = useState(0);
   const [pending, setPending] = useState<RecognizeResponse | null>(null);
+  const [home, setHome] = useState<HomePayload | null>(null);
+
+  async function loadHome() {
+    try {
+      const data = await api<HomePayload>("/api/home");
+      setHome(data);
+      setNickname(data.nickname);
+    } catch {
+      setHome(null);
+    }
+  }
 
   useEffect(() => {
-    void api<{ user: { nickname: string } }>("/api/me")
-      .then((data) => setNickname(data.user.nickname))
-      .catch(() => undefined);
+    void loadHome();
     setRecent(readRecentSearches());
   }, []);
 
@@ -270,6 +287,8 @@ export function RecognizePage() {
         </div>
       </section>
 
+      {home ? <CollectionBanner schedule={home.schedule} compact /> : null}
+
       <section className="mt-7">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold">품목 바로가기</h2>
@@ -297,6 +316,33 @@ export function RecognizePage() {
           ))}
         </div>
       </section>
+
+      {home?.missions.missions.length ? (
+        <section className="mt-8">
+          <MissionList missions={home.missions.missions} onClaimed={() => void loadHome()} />
+        </section>
+      ) : null}
+
+      {home?.quiz ? (
+        <section className="mt-8">
+          <QuizCard quiz={home.quiz} />
+        </section>
+      ) : null}
+
+      {home && home.bag.length > 0 ? (
+        <Link
+          to="/me"
+          className="pressable mt-8 flex items-center justify-between rounded-[22px] bg-surface px-4 py-4"
+        >
+          <span>
+            <span className="block text-[11px] font-bold text-mute">오늘 함께 버리기</span>
+            <span className="mt-0.5 block text-sm font-extrabold">
+              {home.bag.length}개 품목 · 특수함부터 챙기세요
+            </span>
+          </span>
+          <span className="text-mute">›</span>
+        </Link>
+      ) : null}
 
       <section className="mt-8">
         <h2 className="text-base font-extrabold">오늘의 팁</h2>

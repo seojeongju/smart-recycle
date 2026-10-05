@@ -8,6 +8,18 @@ import {
   kstYesterday,
   levelFromXp,
 } from "./lib";
+import {
+  claimMission,
+  createBinReport,
+  gradeQuiz,
+  listDistricts,
+  loadBag,
+  loadMissions,
+  loadMyReportsToday,
+  loadQuiz,
+  loadReportCounts,
+  loadSchedule,
+} from "./phase4";
 import { recognizeImage } from "./recognize";
 import { syncPublicData } from "./sync";
 import { ensureUser } from "./user";
@@ -277,7 +289,7 @@ app.get("/api/bins", async (c) => {
       source: string;
     }>();
 
-  const bins = (results ?? [])
+  const nearby = (results ?? [])
     .map((bin) => ({
       ...bin,
       distance_m: Math.round(haversineMeters(lat, lng, bin.lat, bin.lng)),
@@ -285,6 +297,15 @@ app.get("/api/bins", async (c) => {
     .filter((bin) => bin.distance_m <= radius)
     .sort((a, b) => a.distance_m - b.distance_m)
     .slice(0, 100);
+
+  const reports = await loadReportCounts(
+    c.env.DB,
+    nearby.map((bin) => bin.id),
+  );
+  const bins = nearby.map((bin) => ({
+    ...bin,
+    ...(reports.get(bin.id) ?? { missing_24h: 0, closed_24h: 0 }),
+  }));
 
   const total = await c.env.DB.prepare(
     `SELECT COUNT(*) AS n FROM collection_bins`,
@@ -310,22 +331,129 @@ app.get("/api/bins", async (c) => {
 });
 
 app.get("/api/bins/:id", async (c) => {
+  const id = c.req.param("id");
   const bin = await c.env.DB.prepare(
     `SELECT id, type, name, address, lat, lng, phone, hours, source
      FROM collection_bins WHERE id = ?`,
   )
-    .bind(c.req.param("id"))
+    .bind(id)
     .first();
   if (!bin) {
     return c.json(jsonError("NOT_FOUND", "수거함을 찾을 수 없어요."), 404);
   }
-  return c.json({ bin });
+  const counts = await loadReportCounts(c.env.DB, [id]);
+  const mine = await loadMyReportsToday(c.env.DB, c.get("userId"), id);
+  return c.json({
+    bin: { ...bin, ...(counts.get(id) ?? { missing_24h: 0, closed_24h: 0 }) },
+    reports: mine,
+  });
+});
+
+app.post("/api/bins/:id/reports", async (c) => {
+  const body = await c.req
+    .json<{ kind?: string }>()
+    .catch(() => ({ kind: undefined as string | undefined }));
+  const result = await createBinReport(
+    c.env.DB,
+    c.get("userId"),
+    c.req.param("id"),
+    body.kind ?? "",
+  );
+  if ("error" in result) {
+    return c.json(jsonError("BAD_REQUEST", result.error), result.status);
+  }
+  return c.json({
+    ok: true,
+    message: "제보 감사합니다. 다른 사용자에게 안내됩니다.",
+  });
+});
+
+app.get("/api/districts", async (c) => {
+  const districts = await listDistricts(c.env.DB);
+  return c.json({ districts });
+});
+
+app.get("/api/schedule", async (c) => {
+  const user = await c.env.DB.prepare(
+    `SELECT district_id FROM users WHERE id = ?`,
+  )
+    .bind(c.get("userId"))
+    .first<{ district_id: string | null }>();
+  const requested = (c.req.query("district_id") ?? "").trim();
+  const schedule = await loadSchedule(c.env.DB, requested || user?.district_id || null);
+  return c.json(schedule);
+});
+
+app.get("/api/missions", async (c) => {
+  return c.json(await loadMissions(c.env.DB, c.get("userId")));
+});
+
+app.post("/api/missions/:id/claim", async (c) => {
+  const result = await claimMission(c.env.DB, c.get("userId"), c.req.param("id"));
+  if ("error" in result) {
+    return c.json(jsonError("BAD_REQUEST", result.error), result.status);
+  }
+  return c.json({
+    ok: true,
+    points: result.points,
+    message: `미션 완료! +${result.points}P`,
+  });
+});
+
+app.get("/api/quiz", async (c) => {
+  const quiz = await loadQuiz(c.env.DB);
+  if (!quiz) {
+    return c.json(jsonError("NOT_FOUND", "퀴즈가 아직 없어요."), 404);
+  }
+  return c.json({ quiz });
+});
+
+app.post("/api/quiz", async (c) => {
+  const body = await c.req.json<{ question_id?: string; answer_id?: string }>();
+  const questionId = (body.question_id ?? "").trim();
+  const answerId = (body.answer_id ?? "").trim();
+  if (!questionId || !answerId) {
+    return c.json(jsonError("BAD_REQUEST", "답을 선택해 주세요."), 400);
+  }
+  const result = await gradeQuiz(c.env.DB, questionId, answerId);
+  if ("error" in result) {
+    return c.json(jsonError("NOT_FOUND", result.error), result.status);
+  }
+  return c.json(result);
+});
+
+app.get("/api/bag", async (c) => {
+  const items = await loadBag(c.env.DB, c.get("userId"));
+  return c.json({ items });
+});
+
+app.get("/api/home", async (c) => {
+  const userId = c.get("userId");
+  const user = await c.env.DB.prepare(
+    `SELECT nickname, district_id FROM users WHERE id = ?`,
+  )
+    .bind(userId)
+    .first<{ nickname: string; district_id: string | null }>();
+  const [schedule, missions, quiz, bag] = await Promise.all([
+    loadSchedule(c.env.DB, user?.district_id ?? null),
+    loadMissions(c.env.DB, userId),
+    loadQuiz(c.env.DB),
+    loadBag(c.env.DB, userId),
+  ]);
+  return c.json({
+    nickname: user?.nickname ?? "새싹이",
+    district_id: user?.district_id ?? null,
+    schedule,
+    quiz,
+    missions,
+    bag,
+  });
 });
 
 app.get("/api/me", async (c) => {
   const userId = c.get("userId");
   const user = await c.env.DB.prepare(
-    `SELECT id, nickname, total_xp, total_points, streak_count, last_checkin_date
+    `SELECT id, nickname, total_xp, total_points, streak_count, last_checkin_date, district_id
      FROM users WHERE id = ?`,
   )
     .bind(userId)
@@ -336,6 +464,7 @@ app.get("/api/me", async (c) => {
       total_points: number;
       streak_count: number;
       last_checkin_date: string | null;
+      district_id: string | null;
     }>();
 
   if (!user) {
@@ -357,10 +486,20 @@ app.get("/api/me", async (c) => {
     .all<{ checkin_date: string }>();
 
   const progress = levelFromXp(user.total_xp);
+  let district_name: string | null = null;
+  if (user.district_id) {
+    const district = await c.env.DB.prepare(
+      `SELECT name_ko FROM districts WHERE id = ?`,
+    )
+      .bind(user.district_id)
+      .first<{ name_ko: string }>();
+    district_name = district?.name_ko ?? null;
+  }
   return c.json({
     user: {
       ...user,
       ...progress,
+      district_name,
       checkin_count: count?.n ?? 0,
       recent_dates: (days ?? []).map((d) => d.checkin_date),
     },
@@ -368,18 +507,47 @@ app.get("/api/me", async (c) => {
 });
 
 app.patch("/api/me", async (c) => {
-  const body = await c.req.json<{ nickname?: string }>();
-  const nickname = (body.nickname ?? "").trim();
-  if (!nickname || nickname.length > 12) {
-    return c.json(
-      jsonError("BAD_REQUEST", "별명은 1~12자로 입력해 주세요."),
-      400,
-    );
+  const body = await c.req.json<{ nickname?: string; district_id?: string | null }>();
+  const updates: string[] = [];
+  const params: unknown[] = [];
+  let nickname: string | undefined;
+
+  if (body.nickname !== undefined) {
+    nickname = body.nickname.trim();
+    if (!nickname || nickname.length > 12) {
+      return c.json(
+        jsonError("BAD_REQUEST", "별명은 1~12자로 입력해 주세요."),
+        400,
+      );
+    }
+    updates.push("nickname = ?");
+    params.push(nickname);
   }
+
+  if (body.district_id !== undefined) {
+    if (body.district_id) {
+      const district = await c.env.DB.prepare(
+        `SELECT id FROM districts WHERE id = ?`,
+      )
+        .bind(body.district_id)
+        .first();
+      if (!district) {
+        return c.json(jsonError("BAD_REQUEST", "동네를 찾을 수 없어요."), 400);
+      }
+    }
+    updates.push("district_id = ?");
+    params.push(body.district_id);
+  }
+
+  if (updates.length === 0) {
+    return c.json(jsonError("BAD_REQUEST", "변경할 값이 없어요."), 400);
+  }
+
+  params.push(c.get("userId"));
   await c.env.DB.prepare(
-    `UPDATE users SET nickname = ?, updated_at = datetime('now') WHERE id = ?`,
+    `UPDATE users SET ${updates.join(", ")}, updated_at = datetime('now') WHERE id = ?`,
   )
-    .bind(nickname, c.get("userId"))
+    .bind(...params)
     .run();
   return c.json({ ok: true, nickname });
 });

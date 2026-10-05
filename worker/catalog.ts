@@ -1,4 +1,4 @@
-import type { GuidePayload, GuideStep, UpcycleTip } from "./types";
+import type { GuidePayload, GuideStep, ItemTwin, UpcycleTip } from "./types";
 
 type ItemRow = {
   id: string;
@@ -42,6 +42,16 @@ export async function loadGuide(
     .bind(itemId)
     .all<UpcycleTip>();
 
+  const twins = await db
+    .prepare(
+      `SELECT i.id, i.name_ko, t.reason_ko
+       FROM item_twins t
+       JOIN waste_items i ON i.id = t.twin_id
+       WHERE t.item_id = ? AND i.is_active = 1`,
+    )
+    .bind(itemId)
+    .all<ItemTwin>();
+
   return {
     item_id: item.id,
     category_id: item.category_id,
@@ -52,6 +62,7 @@ export async function loadGuide(
     special_bin_type: item.special_bin_type,
     steps: steps.results ?? [],
     tips: tips.results ?? [],
+    twins: twins.results ?? [],
   };
 }
 

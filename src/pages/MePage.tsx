@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { api } from "../api";
+import { BagList } from "../components/BagList";
+import { CollectionBanner } from "../components/CollectionBanner";
+import { ComplexNote } from "../components/ComplexNote";
+import { MissionList } from "../components/MissionList";
 import { Sprout } from "../components/Sprout";
-import type { MeUser } from "../types";
+import type {
+  BagItem,
+  District,
+  MeUser,
+  MissionView,
+  SchedulePayload,
+} from "../types";
 
 type Checkin = {
   id: string;
@@ -16,18 +26,40 @@ export function MePage() {
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [districtId, setDistrictId] = useState("");
+  const [schedule, setSchedule] = useState<SchedulePayload | null>(null);
+  const [missions, setMissions] = useState<MissionView[]>([]);
+  const [bag, setBag] = useState<BagItem[]>([]);
 
   async function load() {
     const me = await api<{ user: MeUser }>("/api/me");
     setUser(me.user);
     setNickname(me.user.nickname);
-    const history = await api<{ checkins: Checkin[] }>("/api/checkins?limit=10");
+    setDistrictId(me.user.district_id ?? "");
+    const [history, districtList, sched, missionData, bagData] = await Promise.all([
+      api<{ checkins: Checkin[] }>("/api/checkins?limit=10"),
+      api<{ districts: District[] }>("/api/districts"),
+      api<SchedulePayload>("/api/schedule"),
+      api<{ missions: MissionView[] }>("/api/missions"),
+      api<{ items: BagItem[] }>("/api/bag"),
+    ]);
     setCheckins(history.checkins);
+    setDistricts(districtList.districts);
+    setSchedule(sched);
+    setMissions(missionData.missions);
+    setBag(bagData.items);
   }
 
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    if (window.location.hash === "#district") {
+      document.getElementById("district")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [user]);
 
   const week = useMemo(() => lastSevenDates(), []);
 
@@ -43,6 +75,16 @@ export function MePage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function saveDistrict(next: string) {
+    setDistrictId(next);
+    await api("/api/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ district_id: next || null }),
+    });
+    await load();
   }
 
   if (!user) {
@@ -96,6 +138,54 @@ export function MePage() {
         ) : (
           <p className="mt-4 text-center text-xs font-semibold text-ink/70">오늘 인증 완료</p>
         )}
+      </section>
+
+      <section id="district" className="mt-7">
+        <h2 className="text-base font-extrabold">우리 동네</h2>
+        <select
+          value={districtId}
+          onChange={(event) => {
+            void saveDistrict(event.target.value);
+          }}
+          className="field mt-3 bg-white"
+        >
+          <option value="">동네를 선택하세요</option>
+          {districts.map((row) => (
+            <option key={row.id} value={row.id}>
+              {row.city_ko} {row.name_ko}
+            </option>
+          ))}
+        </select>
+        {schedule ? <CollectionBanner schedule={schedule} /> : null}
+        {schedule?.district ? (
+          <div className="mt-3 grid grid-cols-7 gap-1">
+            {schedule.week.map((day) => (
+              <div
+                key={day.weekday}
+                className={`rounded-2xl px-1 py-2 text-center ${
+                  day.weekday === schedule.today.weekday ? "bg-brand-soft" : "bg-surface"
+                }`}
+              >
+                <p className="text-[11px] font-extrabold">{day.label}</p>
+                <p className="mt-1 text-[10px] leading-tight text-mute">
+                  {day.categories.length > 0 ? `${day.categories.length}종` : "—"}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="mt-7">
+        <MissionList missions={missions} onClaimed={() => void load()} />
+      </section>
+
+      <section className="mt-7">
+        <BagList items={bag} />
+      </section>
+
+      <section className="mt-7">
+        <ComplexNote />
       </section>
 
       <section className="mt-7">

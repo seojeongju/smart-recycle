@@ -68,6 +68,25 @@ export function GuideView({
         </p>
       </section>
 
+      {guide.twins && guide.twins.length > 0 ? (
+        <section>
+          <h3 className="text-base font-extrabold">헷갈리기 쉬운 품목</h3>
+          <ul className="mt-2 space-y-2">
+            {guide.twins.map((twin) => (
+              <li key={twin.id}>
+                <Link
+                  to={`/items/${twin.id}`}
+                  className="block rounded-[18px] bg-surface px-4 py-3"
+                >
+                  <p className="text-sm font-extrabold">{twin.name_ko}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-mute">{twin.reason_ko}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section>
         <div className="flex items-center justify-between">
           <h3 className="text-base font-extrabold">이렇게 버리세요</h3>

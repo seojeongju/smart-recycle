@@ -11,6 +11,12 @@ export type UpcycleTip = {
   caution: string | null;
 };
 
+export type ItemTwin = {
+  id: string;
+  name_ko: string;
+  reason_ko: string;
+};
+
 export type GuidePayload = {
   item_id: string;
   category_id: string;
@@ -21,4 +27,5 @@ export type GuidePayload = {
   special_bin_type: string | null;
   steps: GuideStep[];
   tips: UpcycleTip[];
+  twins: ItemTwin[];
 };

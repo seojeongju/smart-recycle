@@ -11,6 +11,12 @@ export type UpcycleTip = {
   caution: string | null;
 };
 
+export type ItemTwin = {
+  id: string;
+  name_ko: string;
+  reason_ko: string;
+};
+
 export type GuidePayload = {
   item_id: string;
   category_id: string;
@@ -21,6 +27,7 @@ export type GuidePayload = {
   special_bin_type: string | null;
   steps: GuideStep[];
   tips: UpcycleTip[];
+  twins?: ItemTwin[];
 };
 
 export type SearchItem = {
@@ -53,6 +60,8 @@ export type Bin = {
   hours: string | null;
   source?: string | null;
   distance_m?: number;
+  missing_24h?: number;
+  closed_24h?: number;
 };
 
 export type MeUser = {
@@ -62,12 +71,75 @@ export type MeUser = {
   total_points: number;
   streak_count: number;
   last_checkin_date: string | null;
+  district_id?: string | null;
+  district_name?: string | null;
   level: number;
   xpInLevel: number;
   xpToNext: number;
   checkin_count: number;
   recent_dates: string[];
 };
+
+export type District = {
+  id: string;
+  name_ko: string;
+  city_ko: string;
+};
+
+export type ScheduleSlot = {
+  weekday: number;
+  label: string;
+  categories: { id: string; name_ko: string }[];
+};
+
+export type SchedulePayload = {
+  district: District | null;
+  disclaimer: string;
+  today: ScheduleSlot;
+  tomorrow: ScheduleSlot;
+  week: ScheduleSlot[];
+};
+
+export type MissionView = {
+  id: string;
+  title_ko: string;
+  target: number;
+  done: number;
+  claimed: boolean;
+  bonus: number;
+};
+
+export type QuizChoice = { id: string; label: string };
+
+export type QuizView = {
+  id: string;
+  prompt: string;
+  choices: QuizChoice[];
+  item_id: string;
+};
+
+export type BagItem = {
+  id: string;
+  item_id: string;
+  name_ko: string;
+  category_id: string;
+  category_name: string;
+  bin_type: string;
+  special_bin_type: string | null;
+};
+
+export type HomePayload = {
+  nickname: string;
+  district_id: string | null;
+  schedule: SchedulePayload;
+  quiz: QuizView | null;
+  missions: { week_start: string; missions: MissionView[] };
+  bag: BagItem[];
+};
+
+export const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+export const COMPLEX_NOTE_KEY = "smart-recycle_complex_note";
 
 export type Category = {
   id: string;

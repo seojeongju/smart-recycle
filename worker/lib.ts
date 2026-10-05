@@ -1,3 +1,5 @@
+export const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
 export function kstDate(now = new Date()): string {
   const shifted = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   return shifted.toISOString().slice(0, 10);
@@ -5,6 +7,30 @@ export function kstDate(now = new Date()): string {
 
 export function kstYesterday(now = new Date()): string {
   return kstDate(new Date(now.getTime() - 24 * 60 * 60 * 1000));
+}
+
+export function kstWeekday(now = new Date()): number {
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCDay();
+}
+
+export function kstTomorrow(now = new Date()): Date {
+  return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+}
+
+export function kstWeekStart(now = new Date()): string {
+  const shifted = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const day = shifted.getUTCDay();
+  const offset = day === 0 ? 6 : day - 1;
+  shifted.setUTCDate(shifted.getUTCDate() - offset);
+  return shifted.toISOString().slice(0, 10);
+}
+
+export function kstDayIndex(now = new Date()): number {
+  const shifted = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const year = shifted.getUTCFullYear();
+  const start = Date.UTC(year, 0, 1);
+  const today = Date.UTC(year, shifted.getUTCMonth(), shifted.getUTCDate());
+  return Math.floor((today - start) / 86_400_000);
 }
 
 export function levelFromXp(totalXp: number): {
