@@ -56,15 +56,18 @@ export function CameraOverlay({ stream, busy, onClose, onCapture }: Props) {
         </button>
       </div>
       <div className="safe-bottom absolute inset-x-0 bottom-0 flex flex-col items-center pb-8">
-        <button
-          type="button"
-          onClick={() => {
-            void takePhoto();
-          }}
-          disabled={busy}
-          className="h-[72px] w-[72px] rounded-full border-4 border-white bg-brand disabled:opacity-60"
-          aria-label="사진 찍기"
-        />
+        <div className="relative flex h-[88px] w-[88px] items-center justify-center">
+          <span className="pulse-ring absolute inset-0 rounded-full bg-brand/40" />
+          <button
+            type="button"
+            onClick={() => {
+              void takePhoto();
+            }}
+            disabled={busy}
+            className="relative h-[72px] w-[72px] rounded-full border-4 border-white bg-brand disabled:opacity-60"
+            aria-label="사진 찍기"
+          />
+        </div>
         <p className="mt-3 text-sm font-semibold text-white">
           {busy ? "살펴보는 중..." : "버튼을 눌러 촬영"}
         </p>

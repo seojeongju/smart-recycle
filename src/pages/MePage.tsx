@@ -46,7 +46,12 @@ export function MePage() {
   }
 
   if (!user) {
-    return <p className="px-5 pt-8 text-sm text-mute">불러오는 중...</p>;
+    return (
+      <div className="px-5 pt-8">
+        <div className="shimmer h-36 rounded-[24px]" />
+        <div className="shimmer mt-4 h-16 rounded-[18px]" />
+      </div>
+    );
   }
 
   const percent = user.level >= 10 ? 100 : Math.round((user.xpInLevel / 50) * 100);
@@ -54,21 +59,22 @@ export function MePage() {
   const checkedToday = user.recent_dates.includes(today);
 
   return (
-    <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4">
-      <h1 className="text-[26px] font-extrabold tracking-tight">마이</h1>
+    <div className="page-enter flex-1 overflow-y-auto px-5 pb-6 pt-4">
+      <p className="text-[11px] font-bold tracking-[0.08em] text-mute">내 지갑</p>
+      <h1 className="mt-1 text-[28px] font-extrabold tracking-tight">마이</h1>
 
-      <section className="mt-4 rounded-[24px] bg-brand px-5 py-5">
+      <section className="hero-card mt-4 rounded-[26px] px-5 py-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-bold text-ink/70">포인트 지갑</p>
-            <p className="mt-1 text-[34px] font-extrabold tracking-tight">
+            <p className="mt-1 text-[36px] font-extrabold tracking-tight">
               {user.total_points.toLocaleString()}
               <span className="ml-1 text-lg font-extrabold">P</span>
             </p>
           </div>
           <Sprout level={user.level} compact />
         </div>
-        <div className="mt-4 rounded-[18px] bg-white/80 px-4 py-3">
+        <div className="glass-card mt-4 rounded-[18px] px-4 py-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold">레벨 {user.level}</p>
             <p className="text-[11px] font-semibold text-ink/70">
@@ -76,33 +82,33 @@ export function MePage() {
             </p>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
-            <div className="h-full rounded-full bg-ink" style={{ width: `${percent}%` }} />
+            <div className="progress-fill bg-ink" style={{ width: `${percent}%` }} />
           </div>
           <p className="mt-1.5 text-[11px] text-ink/70">{user.xpInLevel}/50 XP</p>
         </div>
         {!checkedToday ? (
           <Link
             to="/"
-            className="mt-3 flex min-h-11 items-center justify-center rounded-2xl bg-ink text-sm font-bold text-white"
+            className="pressable mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-ink text-sm font-bold text-white"
           >
             오늘 인증하면 +10P
           </Link>
         ) : (
-          <p className="mt-3 text-center text-xs font-semibold text-ink/70">
-            오늘 인증 완료
-          </p>
+          <p className="mt-4 text-center text-xs font-semibold text-ink/70">오늘 인증 완료</p>
         )}
       </section>
 
-      <section className="mt-6">
+      <section className="mt-7">
         <h2 className="text-base font-extrabold">최근 7일</h2>
-        <div className="mt-3 grid grid-cols-7 gap-1">
+        <div className="stagger mt-3 grid grid-cols-7 gap-1">
           {week.map((day) => {
             const on = user.recent_dates.includes(day);
             return (
               <div key={day} className="text-center">
                 <div
-                  className={`mx-auto h-9 w-9 rounded-full ${on ? "bg-brand" : "bg-surface"}`}
+                  className={`mx-auto h-9 w-9 rounded-full transition-transform duration-300 ${
+                    on ? "bg-brand shadow-[0_6px_12px_rgb(123_224_74/0.35)]" : "bg-surface"
+                  }`}
                 />
                 <p className="mt-1 text-[10px] text-mute">{day.slice(5)}</p>
               </div>
@@ -111,12 +117,12 @@ export function MePage() {
         </div>
       </section>
 
-      <section className="mt-6">
+      <section className="mt-7">
         <h2 className="text-base font-extrabold">거래 내역</h2>
         {checkins.length === 0 ? (
           <p className="mt-3 text-sm text-mute">아직 인증 기록이 없어요.</p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="stagger mt-3 space-y-2">
             {checkins.map((row) => (
               <li
                 key={row.id}
@@ -140,7 +146,7 @@ export function MePage() {
         )}
       </section>
 
-      <section className="mt-6">
+      <section className="mt-7">
         <h2 className="text-base font-extrabold">프로필</h2>
         <div className="mt-3 rounded-[20px] bg-surface p-4">
           <label className="text-xs font-bold text-mute">별명</label>
@@ -157,7 +163,7 @@ export function MePage() {
                 void saveName();
               }}
               disabled={saving}
-              className="min-h-[52px] rounded-[14px] bg-ink px-4 text-sm font-bold text-white"
+              className="pressable min-h-[52px] rounded-[14px] bg-ink px-4 text-sm font-bold text-white"
             >
               저장
             </button>

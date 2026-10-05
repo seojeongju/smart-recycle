@@ -36,7 +36,7 @@ export function InstallBanner() {
   if (!deferred && !iosHint) return null;
 
   return (
-    <div className="mx-5 mb-3 rounded-[18px] bg-surface px-4 py-3">
+    <div className="slide-up mx-5 mb-3 rounded-[18px] bg-surface px-4 py-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-extrabold">홈 화면에 추가</p>

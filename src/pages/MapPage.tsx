@@ -122,9 +122,10 @@ export function MapPage() {
   const place = denied ? "서울시청" : region || "내 위치";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="page-enter flex min-h-0 flex-1 flex-col">
       <div className="px-5 pt-4">
-        <h1 className="text-[26px] font-extrabold tracking-tight">수거함</h1>
+        <p className="text-[11px] font-bold tracking-[0.08em] text-mute">내 주변</p>
+        <h1 className="mt-1 text-[28px] font-extrabold tracking-tight">수거함</h1>
         <p className="mt-1 text-xs leading-5 text-mute">
           {place} 기준 · 안내는 일반 기준이에요
           {coverage ? ` · 근처 ${coverage.nearby}곳` : ""}
@@ -142,7 +143,7 @@ export function MapPage() {
                   else next.delete("type");
                   setParams(next, { replace: true });
                 }}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${
+                className={`pressable shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${
                   active ? "bg-brand text-ink" : "bg-surface text-ink"
                 }`}
               >
@@ -156,7 +157,7 @@ export function MapPage() {
       <section className={`sheet ${selected ? "sheet-open" : "sheet-peek"}`}>
         <div className="sheet-handle" />
         {selected ? (
-          <div className="overflow-y-auto px-4 pb-4">
+          <div className="slide-up overflow-y-auto px-4 pb-4">
             <button
               type="button"
               onClick={() => setSelected(null)}

@@ -43,8 +43,9 @@ export function SearchPage() {
   }, [query]);
 
   return (
-    <div className="flex flex-1 flex-col px-5 pt-4">
-      <h1 className="text-[26px] font-extrabold tracking-tight">검색</h1>
+    <div className="page-enter flex flex-1 flex-col px-5 pt-4">
+      <p className="text-[11px] font-bold tracking-[0.08em] text-mute">품목 찾기</p>
+      <h1 className="mt-1 text-[28px] font-extrabold tracking-tight">검색</h1>
       <label className="mt-4 block">
         <span className="sr-only">검색어</span>
         <input
@@ -60,7 +61,7 @@ export function SearchPage() {
             key={category.id}
             type="button"
             onClick={() => setQuery(category.name_ko)}
-            className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${
+            className={`pressable shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${
               query === category.name_ko ? "bg-brand text-ink" : "bg-surface text-ink"
             }`}
           >
@@ -69,12 +70,20 @@ export function SearchPage() {
         ))}
       </div>
       <div className="mt-4 flex-1 overflow-y-auto pb-4">
-        {busy ? <p className="text-sm text-mute">찾는 중...</p> : null}
-        {!busy && query.trim() && items.length === 0 ? (
-          <p className="text-sm text-mute">검색 결과가 없어요. 다른 이름으로 시도해 보세요.</p>
+        {busy ? (
+          <div className="space-y-2">
+            <div className="shimmer h-16 rounded-[18px]" />
+            <div className="shimmer h-16 rounded-[18px]" />
+            <div className="shimmer h-16 rounded-[18px]" />
+          </div>
         ) : null}
-        {!query.trim() ? (
-          <div>
+        {!busy && query.trim() && items.length === 0 ? (
+          <p className="fade-swap text-sm text-mute">
+            검색 결과가 없어요. 다른 이름으로 시도해 보세요.
+          </p>
+        ) : null}
+        {!busy && !query.trim() ? (
+          <div className="fade-swap">
             <p className="text-sm text-mute">품목 이름이나 위의 카테고리를 눌러 보세요.</p>
             {recent.length > 0 ? (
               <div className="mt-4">
@@ -85,7 +94,7 @@ export function SearchPage() {
                       key={item}
                       type="button"
                       onClick={() => setQuery(item)}
-                      className="rounded-full bg-surface px-3.5 py-2 text-xs font-bold"
+                      className="pressable rounded-full bg-surface px-3.5 py-2 text-xs font-bold"
                     >
                       {item}
                     </button>
@@ -95,23 +104,25 @@ export function SearchPage() {
             ) : null}
           </div>
         ) : null}
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                to={`/items/${item.id}`}
-                className="flex items-center justify-between rounded-[18px] bg-surface px-4 py-3.5"
-              >
-                <span>
-                  <span className="text-[11px] font-bold text-mute">{item.category_name}</span>
-                  <span className="mt-0.5 block font-extrabold">{item.name_ko}</span>
-                  <span className="mt-1 block text-sm text-mute">{item.summary_ko}</span>
-                </span>
-                <span className="ml-3 text-mute">›</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {!busy ? (
+          <ul className="stagger space-y-2">
+            {items.map((item) => (
+              <li key={item.id}>
+                <Link
+                  to={`/items/${item.id}`}
+                  className="pressable flex items-center justify-between rounded-[18px] bg-surface px-4 py-3.5"
+                >
+                  <span>
+                    <span className="text-[11px] font-bold text-mute">{item.category_name}</span>
+                    <span className="mt-0.5 block font-extrabold">{item.name_ko}</span>
+                    <span className="mt-1 block text-sm text-mute">{item.summary_ko}</span>
+                  </span>
+                  <span className="ml-3 text-mute">›</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </div>
   );

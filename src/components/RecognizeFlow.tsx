@@ -28,7 +28,7 @@ export function RecognizeFlow({
   const percent = Math.round((confidence ?? 0) * 100);
 
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col bg-white">
+    <div className="slide-up fixed inset-0 z-[90] flex flex-col bg-white">
       <div className="safe-top flex items-center justify-between px-4 py-3">
         <button type="button" onClick={onClose} className="text-sm font-extrabold">
           닫기
@@ -39,22 +39,22 @@ export function RecognizeFlow({
         <span className="w-10" />
       </div>
       <div className="px-5">
-        <div className="overflow-hidden rounded-[24px] bg-surface">
+        <div className="overflow-hidden rounded-[24px] bg-surface shadow-[0_16px_36px_rgb(17_17_17/0.08)]">
           <img src={previewUrl} alt="촬영한 쓰레기" className="h-56 w-full object-cover" />
         </div>
       </div>
       {mode === "loading" ? (
         <div className="flex flex-1 flex-col items-center justify-center px-8 pb-10">
-          <span className="h-2 w-40 overflow-hidden rounded-full bg-surface">
-            <span className="block h-full w-1/2 animate-pulse rounded-full bg-brand" />
-          </span>
-          <p className="mt-5 text-center text-lg font-extrabold">{stageLabel}</p>
+          <span className="scan-bar h-2 w-44 overflow-hidden rounded-full bg-surface" />
+          <p key={stageLabel} className="fade-swap mt-5 text-center text-lg font-extrabold">
+            {stageLabel}
+          </p>
           <p className="mt-2 text-center text-sm text-mute">
             조금 걸릴 수 있어요. 화면을 유지해 주세요.
           </p>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col px-5 pb-6 pt-5">
+        <div className="fade-swap flex min-h-0 flex-1 flex-col px-5 pb-6 pt-5">
           <p className="text-xs font-bold text-mute">인식 결과</p>
           <h2 className="mt-1 text-[28px] font-extrabold tracking-tight">
             {labelKo ?? "이 물건"}
@@ -66,14 +66,14 @@ export function RecognizeFlow({
             <button
               type="button"
               onClick={onYes}
-              className="min-h-12 flex-1 rounded-2xl bg-ink text-sm font-bold text-white"
+              className="pressable min-h-12 flex-1 rounded-2xl bg-ink text-sm font-bold text-white"
             >
               맞아요
             </button>
             <button
               type="button"
               onClick={onNo}
-              className="min-h-12 flex-1 rounded-2xl bg-surface text-sm font-bold"
+              className="pressable min-h-12 flex-1 rounded-2xl bg-surface text-sm font-bold"
             >
               아니에요
             </button>
@@ -81,13 +81,13 @@ export function RecognizeFlow({
           {alternatives.length > 0 ? (
             <div className="mt-6 min-h-0 flex-1 overflow-y-auto">
               <p className="text-[11px] font-bold text-mute">아니면 이 품목인가요?</p>
-              <ul className="mt-2 space-y-2">
+              <ul className="stagger mt-2 space-y-2">
                 {alternatives.map((item) => (
                   <li key={item.id}>
                     <button
                       type="button"
                       onClick={() => onPickAlt(item.id)}
-                      className="flex w-full items-center justify-between rounded-[18px] bg-surface px-4 py-3.5 text-left"
+                      className="pressable flex w-full items-center justify-between rounded-[18px] bg-surface px-4 py-3.5 text-left"
                     >
                       <span>
                         <span className="text-[11px] font-bold text-mute">

@@ -183,7 +183,7 @@ export function RecognizePage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
+    <div className="page-enter flex-1 overflow-y-auto px-5 pb-5 pt-3">
       {stream ? (
         <CameraOverlay
           stream={stream}
@@ -229,31 +229,33 @@ export function RecognizePage() {
 
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold text-mute">Smart Recycle</p>
-          <h1 className="mt-0.5 text-[22px] font-extrabold tracking-tight">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-mute">
+            Smart Recycle
+          </p>
+          <h1 className="mt-1 text-[24px] font-extrabold tracking-tight">
             안녕하세요, {nickname}
           </h1>
         </div>
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand font-extrabold">
+        <span className="float-slow flex h-11 w-11 items-center justify-center rounded-2xl bg-brand font-extrabold shadow-[0_8px_18px_rgb(123_224_74/0.35)]">
           SR
         </span>
       </header>
 
-      <section className="mt-4 overflow-hidden rounded-[22px] bg-brand px-5 py-5">
+      <section className="hero-card mt-5 rounded-[26px] px-5 py-6">
         <p className="text-sm font-semibold text-ink/70">한 장이면 끝</p>
-        <h2 className="mt-1 text-xl font-extrabold leading-snug">
+        <h2 className="mt-1 text-[22px] font-extrabold leading-snug tracking-tight">
           사진 찍고
           <br />
           바르게 버리기
         </h2>
-        <div className="mt-4 flex gap-2">
+        <div className="mt-5 flex gap-2">
           <button
             type="button"
             onClick={() => {
               void startCamera();
             }}
             disabled={busy}
-            className="min-h-11 flex-1 rounded-2xl bg-ink text-sm font-bold text-white disabled:opacity-60"
+            className="pressable min-h-12 flex-1 rounded-2xl bg-ink text-sm font-bold text-white shadow-[0_10px_20px_rgb(17_17_17/0.18)] disabled:opacity-60"
           >
             {busy ? "살펴보는 중..." : "촬영하기"}
           </button>
@@ -263,23 +265,27 @@ export function RecognizePage() {
               void pickAlbumFile().then((file) => onFile(file));
             }}
             disabled={busy}
-            className="min-h-11 flex-1 rounded-2xl bg-white text-sm font-bold disabled:opacity-60"
+            className="pressable min-h-12 flex-1 rounded-2xl bg-white/90 text-sm font-bold disabled:opacity-60"
           >
             앨범
           </button>
         </div>
       </section>
 
-      <section className="mt-6">
+      <section className="mt-7">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold">품목 바로가기</h2>
           <Link to="/search" className="text-xs font-semibold text-mute">
             전체
           </Link>
         </div>
-        <div className="mt-3 grid grid-cols-4 gap-x-3 gap-y-4">
+        <div className="stagger mt-3 grid grid-cols-4 gap-x-3 gap-y-4">
           {FEATURES.map((item) => (
-            <Link key={item.label} to={`/search?q=${encodeURIComponent(item.q)}`} className="text-center">
+            <Link
+              key={item.label}
+              to={`/search?q=${encodeURIComponent(item.q)}`}
+              className="tile text-center"
+            >
               <span
                 className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px]"
                 style={{ background: item.bg }}
@@ -292,13 +298,13 @@ export function RecognizePage() {
         </div>
       </section>
 
-      <section className="mt-7">
+      <section className="mt-8">
         <h2 className="text-base font-extrabold">오늘의 팁</h2>
         <div className="hide-scroll mt-3 flex gap-3 overflow-x-auto pb-1">
           {TIPS.map((tip) => (
             <article
               key={tip.title}
-              className="min-w-[220px] rounded-[20px] bg-surface px-4 py-4"
+              className="min-w-[228px] rounded-[22px] bg-surface px-4 py-4 shadow-[0_8px_24px_rgb(17_17_17/0.04)]"
             >
               <p className="font-extrabold">{tip.title}</p>
               <p className="mt-1 text-sm leading-5 text-mute">{tip.body}</p>
@@ -312,7 +318,7 @@ export function RecognizePage() {
       ) : null}
 
       {fallback ? (
-        <div className="mt-4 rounded-[20px] bg-surface p-4">
+        <div className="slide-up mt-4 rounded-[22px] bg-surface p-4">
           <p className="text-center font-extrabold">잘 모르겠어요</p>
           <p className="mt-1 text-center text-sm leading-6 text-mute">
             가까이 다시 찍거나, 아래 품목·최근 검색으로 바로 찾아 보세요.

@@ -15,7 +15,7 @@ export function AppShell() {
   }, []);
 
   return (
-    <div className="phone-shell relative flex h-dvh max-h-dvh flex-col overflow-hidden bg-white">
+    <div className="phone-shell relative flex h-dvh max-h-dvh flex-col overflow-hidden">
       {showOnboarding ? (
         <Onboarding
           onDone={() => {

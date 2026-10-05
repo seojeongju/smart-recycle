@@ -28,19 +28,28 @@ export function Onboarding({ onDone }: Props) {
     <div className="absolute inset-0 z-40 flex flex-col bg-white px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <div className="relative flex h-44 w-44 items-center justify-center">
+          <span className="pulse-ring absolute h-40 w-40 rounded-full bg-brand/50" />
           <span className="absolute h-36 w-36 rounded-full bg-brand" />
-          <span className="relative text-4xl font-extrabold">{index + 1}</span>
+          <span key={index} className="check-pop relative text-4xl font-extrabold">
+            {index + 1}
+          </span>
         </div>
-        <p className="mt-4 text-sm font-semibold text-mute">Smart Recycle</p>
-        <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight">
-          {slide.title}
-        </h1>
-        <p className="mt-3 max-w-[280px] text-[15px] leading-6 text-mute">{slide.body}</p>
+        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.16em] text-mute">
+          Smart Recycle
+        </p>
+        <div key={slide.title} className="fade-swap">
+          <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight">
+            {slide.title}
+          </h1>
+          <p className="mt-3 max-w-[280px] text-[15px] leading-6 text-mute">{slide.body}</p>
+        </div>
         <div className="mt-6 flex gap-1.5">
           {SLIDES.map((item, i) => (
             <span
               key={item.title}
-              className={`h-1.5 rounded-full ${i === index ? "w-6 bg-ink" : "w-1.5 bg-surface"}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === index ? "w-6 bg-ink" : "w-1.5 bg-surface"
+              }`}
             />
           ))}
         </div>

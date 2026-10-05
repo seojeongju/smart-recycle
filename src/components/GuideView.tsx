@@ -59,11 +59,11 @@ export function GuideView({
 
   return (
     <div className="space-y-5 pb-6">
-      <section className="rounded-[24px] bg-brand px-5 py-5">
+      <section className="hero-card rounded-[26px] px-5 py-6">
         <p className="text-xs font-bold text-ink/70">{guide.category_name}</p>
-        <h2 className="mt-1 text-[26px] font-extrabold">{guide.name_ko}</h2>
+        <h2 className="mt-1 text-[26px] font-extrabold tracking-tight">{guide.name_ko}</h2>
         <p className="mt-2 text-sm leading-6">{guide.summary_ko}</p>
-        <p className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-extrabold">
+        <p className="mt-3 inline-flex rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold">
           {guide.bin_type}
         </p>
       </section>
@@ -74,9 +74,9 @@ export function GuideView({
           <p className="text-xs font-bold text-mute">{progress}%</p>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface">
-          <div className="h-full rounded-full bg-brand" style={{ width: `${progress}%` }} />
+          <div className="progress-fill bg-brand" style={{ width: `${progress}%` }} />
         </div>
-        <ol className="mt-3 space-y-2">
+        <ol className="stagger mt-3 space-y-2">
           {guide.steps.map((step) => {
             const checked = done.has(step.order);
             return (
@@ -84,13 +84,13 @@ export function GuideView({
                 <button
                   type="button"
                   onClick={() => toggle(step.order)}
-                  className={`flex w-full gap-3 rounded-[18px] px-4 py-3 text-left ${
+                  className={`pressable flex w-full gap-3 rounded-[18px] px-4 py-3 text-left ${
                     checked ? "bg-brand-soft" : "bg-surface"
                   }`}
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
-                      checked ? "bg-ink text-white" : "bg-brand"
+                      checked ? "check-pop bg-ink text-white" : "bg-brand"
                     }`}
                   >
                     {checked ? "✓" : step.order}
@@ -126,7 +126,7 @@ export function GuideView({
       {guide.special_bin_type ? (
         <Link
           to={`/map?type=${guide.special_bin_type}`}
-          className="flex min-h-[54px] items-center justify-center rounded-[16px] bg-surface text-[15px] font-extrabold"
+          className="pressable flex min-h-[54px] items-center justify-center rounded-[16px] bg-surface text-[15px] font-extrabold"
         >
           근처 수거함 보기
         </Link>

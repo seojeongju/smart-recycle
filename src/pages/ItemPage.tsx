@@ -48,13 +48,20 @@ export function ItemPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-5 pt-4">
-      <Link to={fromRecognize ? "/" : "/search"} className="text-sm font-extrabold">
+    <div className="page-enter flex-1 overflow-y-auto px-5 pt-4">
+      <Link
+        to={fromRecognize ? "/" : "/search"}
+        className="pressable inline-flex rounded-full bg-surface px-3 py-1.5 text-sm font-extrabold"
+      >
         {fromRecognize ? "← 홈" : "← 검색"}
       </Link>
       {error ? <p className="mt-6 text-sm text-mute">{error}</p> : null}
       {!guide && !error ? (
-        <p className="mt-6 text-sm text-mute">가이드를 불러오는 중...</p>
+        <div className="mt-6 space-y-3">
+          <div className="shimmer h-32 rounded-[24px]" />
+          <div className="shimmer h-16 rounded-[18px]" />
+          <div className="shimmer h-16 rounded-[18px]" />
+        </div>
       ) : null}
       {guide ? (
         <div className="mt-3">

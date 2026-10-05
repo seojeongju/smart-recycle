@@ -9,7 +9,7 @@ const tabs = [
 
 export function BottomNav() {
   return (
-    <nav className="safe-bottom z-20 border-t border-black/5 bg-white">
+    <nav className="safe-bottom z-20 border-t border-black/5 bg-white/92 backdrop-blur-xl">
       <ul className="grid grid-cols-4 px-2">
         {tabs.map((tab) => (
           <li key={tab.to}>
@@ -21,8 +21,8 @@ export function BottomNav() {
               {({ isActive }) => (
                 <>
                   <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-                      isActive ? "bg-brand" : "bg-transparent"
+                    className={`nav-icon flex h-8 w-8 items-center justify-center rounded-xl ${
+                      isActive ? "is-on bg-brand" : "bg-transparent"
                     }`}
                   >
                     <tab.icon active={isActive} />

@@ -12,7 +12,7 @@ export function Sprout({ level, nickname, compact = false }: Props) {
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size} viewBox="0 0 160 160" aria-hidden>
+      <svg className="sway" width={size} height={size} viewBox="0 0 160 160" aria-hidden>
         <circle cx="80" cy="80" r="72" fill="#ffffff" fillOpacity="0.55" />
         <ellipse cx="80" cy="128" rx="36" ry="8" fill="#4CAF2A" fillOpacity="0.2" />
         <path
